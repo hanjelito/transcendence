@@ -20,7 +20,7 @@ export class ChatController {
 
   @Get(':identifier')
   async findOne(@Param('identifier') identifier: string) {
-    return this.chatService.findOne(identifier);
+    return this.chatService.findOnePlain(identifier);
   }
 
   @Patch(':id')

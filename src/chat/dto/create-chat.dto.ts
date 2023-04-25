@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsOptional, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, MinLength, MaxLength, IsArray } from 'class-validator';
 
 export class CreateChatDto {
 	@IsString()
@@ -24,4 +24,9 @@ export class CreateChatDto {
 	password: string;
 
 	// size: string[];
+
+	@IsString({ each: true })
+	@IsArray()
+	@IsOptional()
+	images: string[];
 }
