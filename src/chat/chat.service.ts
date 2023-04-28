@@ -3,10 +3,11 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { validate as isUUID } from 'uuid';
 
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { validate as isUUID } from 'uuid';
 import { ChatImage, Chat } from './entities';
+import { User } from '../auth/entities/user.entity';
 
 
 @Injectable()
@@ -25,23 +26,6 @@ export class ChatService {
 
     ) {}
 
-  async create(createChatDto: CreateChatDto) {
-    try {
-      const { images = [], ...chatDetails } = createChatDto;
-
-      const chat = this.chatRepository.create({
-        ...chatDetails,
-        images: images.map( image => this.chatImageRepository.create( {url: image}) )
-      });
-
-      await this.chatRepository.save(chat);
-      //retorno el chat con las imagenes
-      return {...chat, images};
-
-    } catch (error) {
-      this.handleDBExceptions(error);
-    }
-  }
 //TODO: add pagination
   async findAll( PaginationDto: PaginationDto)
   {
@@ -94,7 +78,26 @@ export class ChatService {
     }
   }
 
-  async update(id: string, updateChatDto: UpdateChatDto)
+  async create(createChatDto: CreateChatDto, user: User) {
+    try {
+      const { images = [], ...chatDetails } = createChatDto;
+
+      const chat = this.chatRepository.create({
+        ...chatDetails,
+        user,
+        images: images.map( image => this.chatImageRepository.create( {url: image}) )
+      });
+
+      await this.chatRepository.save(chat);
+      //retorno el chat con las imagenes
+      return {...chat, images};
+
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
+
+  async update(id: string, updateChatDto: UpdateChatDto, user: User)
   {
 
     const { images, ...toUpdate } = updateChatDto;
@@ -118,6 +121,8 @@ export class ChatService {
           image => this.chatImageRepository.create( { url: image})
         );
       }
+
+      chat.user = user;
 
       await queryRunner.manager.save(chat);
 

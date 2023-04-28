@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatModule } from './chat/chat.module';
 import { CommonModule } from './common/common.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CommonModule } from './common/common.module';
     }),
     ChatModule,
     CommonModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

@@ -1,6 +1,7 @@
+import {Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToMany, ManyToOne } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import {Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToMany } from 'typeorm';
 import { ChatImage } from './chat-iamge.entity';
+import { User } from '../../auth/entities/user.entity';
 
 @Entity()
 export class Chat {
@@ -45,6 +46,15 @@ export class Chat {
 		{cascade: true, eager: true}
 	)
 	images?: ChatImage[];
+
+	@ManyToOne(
+		() => User,
+		( user ) => user.chat,
+		{ eager: true},
+	)
+	user: User
+
+
 
 	// @Column('text', {
 	// 	array: true,
