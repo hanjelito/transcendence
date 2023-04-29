@@ -39,7 +39,7 @@ export class AuthService {
     };
   }
 
-  //login with 42
+  //login with 42 or create user
   async loginOrCreateWith42( user: any ) {
     const { email, name, lastName, login, password } = user;
 

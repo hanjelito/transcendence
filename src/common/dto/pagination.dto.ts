@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsNumber, IsOptional, IsPositive, Min } from "class-validator";
+import { IsOptional, IsPositive, Min } from "class-validator";
 
 export class PaginationDto {
   
