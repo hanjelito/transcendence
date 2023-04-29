@@ -20,7 +20,7 @@ export class AuthService {
   // Método para iniciar sesión de un usuario.
   async login(loginUserDto: LoginUserDto) {
     const { password, email } = loginUserDto;
-
+    
     // Busca al usuario por su correo electrónico.
     const user = await this.userRepository.findOne({
       where: { email },
@@ -38,6 +38,47 @@ export class AuthService {
       token: this.getJwtToken({ id: user.id }),
     };
   }
+
+  //login with 42
+  async loginOrCreateWith42( user: any ) {
+    const { email, name, lastName, login, password } = user;
+
+    // Busca al usuario por su correo electrónico.
+    const userDB = await this.userRepository.findOne({
+      where: { email },
+      select: { email: true, password: true, id: true },
+    });
+
+    // Verifica si el correo electrónico coincide.
+    if (!userDB) {
+
+      // create user
+      const newUser = await this.userRepository.save({
+        email,
+        password,
+        name,
+        lastName,
+        login,
+      });
+
+      // // Retorna el usuario logueado junto con su token JWT.
+      return {
+        ...newUser,
+        token: this.getJwtToken({ id: newUser.id }),
+      };
+    }
+    // if (!userDB) throw new UnauthorizedException('Credentials are not valid (emailss)');
+
+    // Retorna el usuario logueado junto con su token JWT.
+    return {
+      ...userDB,
+      token: this.getJwtToken({ id: userDB.id }),
+    };
+  }
+    
+
+
+
 
   // Método para verificar el estado de autenticación del usuario.
   async checkAuthStatus(user: User) {

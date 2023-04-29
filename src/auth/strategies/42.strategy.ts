@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 import { Strategy } from 'passport-42';
 import { AuthService } from '../auth.service';
@@ -24,14 +25,14 @@ export class FortyTwoStrategy extends PassportStrategy(Strategy, '42') {
 	try {
 		const { id, _json } = profile;
 	
-		return _json;
+		// return _json;
 		return {
-		  id,
-		  name: _json.first_name,
-		  lastName: _json.last_name,
-		  email: _json.email,
-		  login: _json.login,
-		  image: _json.image,
+			email: _json.email,
+			password: bcrypt.hashSync((Math.random() + 1).toString(36).substring(7), 10),
+			name: _json.first_name,
+			lastName: _json.last_name,
+			login: _json.login,
+			image: _json.image,
 		};
 		
 	} catch (error) {

@@ -91,6 +91,8 @@ export class AuthController {
   fortyTwoCallback(@Req() req: Request) {
     // Maneja el proceso de autenticación cuando 42 redirige al usuario aquí
     const user = req.user;
+    const jwt: any = this.authService.loginOrCreateWith42(user);
+    return jwt;
     // Puedes generar un token JWT aquí y redirigir al usuario a la aplicación cliente
     // o hacer lo que necesites con los datos del usuario.
     return req.user;

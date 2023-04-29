@@ -28,6 +28,27 @@ export class User {
 		type: 'text',
 		select: false
 	})
+
+	// Propiedad user del usuario, de tipo texto y único.
+	@Column({
+		type: 'text',
+		unique: true,
+	})
+	login: string;
+
+	// Propiedad imagenes del usuario, de tipo texto.
+	@Column({
+		type: 'text',
+		array: true,
+		default: []
+	})
+	// Propiedad images del usuario, que es un array de tipo texto, con un valor predeterminado de [].
+	images: string[];
+
+	@Column({
+		type: 'text',
+		select: false
+	})
 	// Propiedad password del usuario, de tipo texto y no se selecciona por defecto en las consultas.
 	password: string;
 

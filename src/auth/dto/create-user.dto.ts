@@ -30,6 +30,11 @@ export class CreateUserDto {
 	@MinLength(5)
 	// Propiedad lastName del usuario que debe ser una cadena de caracteres con una longitud mínima de 5 caracteres.
 	lastName: string;
+
+	@IsString()
+	@MinLength(5)
+	// Propiedad user del usuario que debe ser una cadena de caracteres con una longitud mínima de 5 caracteres.
+	login: string;
 }
 
 /**
