@@ -1,5 +1,5 @@
 
-
+// interface para el payload del token jwt que se genera en el login.
 export interface JwtPayload
 {
 	id: string;
