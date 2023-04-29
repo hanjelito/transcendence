@@ -9,11 +9,17 @@ import { UserRoleGuard } from './guards/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
 import { Auth, ValidRoles } from './interfaces';
 
+import {ConfigService } from '@nestjs/config';
+import { Request } from 'express';
+
 // AuthController es el controlador encargado de gestionar
 // las acciones relacionadas con la autenticación.
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService
+  ) {}
 
   // Ruta de registro de nuevos usuarios.
   @Post('register')
@@ -72,6 +78,22 @@ export class AuthController {
       ok: true,
       user,
     };
+  }
+  //
+  @Get('42')
+  @UseGuards(AuthGuard('42'))
+  fortyTwoLogin() {
+    // Inicia el proceso de autenticación con 42
+  }
+
+  @Get('42/callback')
+  @UseGuards(AuthGuard('42'))
+  fortyTwoCallback(@Req() req: Request) {
+    // Maneja el proceso de autenticación cuando 42 redirige al usuario aquí
+    const user = req.user;
+    // Puedes generar un token JWT aquí y redirigir al usuario a la aplicación cliente
+    // o hacer lo que necesites con los datos del usuario.
+    return req.user;
   }
 }
 

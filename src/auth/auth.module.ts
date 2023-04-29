@@ -9,10 +9,12 @@ import { AuthService } from './auth.service';
 import { User } from './entities/user.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
+import { FortyTwoStrategy } from './strategies/42.strategy';
+
 // AuthModule es el módulo encargado de gestionar la autenticación en la aplicación.
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, FortyTwoStrategy],
   imports: [
     // Importa el módulo de configuración para obtener las variables de entorno.
     ConfigModule,

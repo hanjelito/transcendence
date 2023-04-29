@@ -17,33 +17,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  // Método para crear un nuevo usuario.
-  async create(createUserDto: CreateUserDto) {
-    try {
-      const { password, ...userData } = createUserDto;
-
-      // Crea un nuevo usuario y encripta su contraseña.
-      const user = this.userRepository.create({
-        ...userData,
-        password: bcrypt.hashSync(password, 10),
-      });
-
-      // Guarda el usuario en la base de datos.
-      await this.userRepository.save(user);
-
-      // Elimina la contraseña del objeto user.
-      delete user.password;
-
-      // Retorna el usuario creado junto con su token JWT.
-      return {
-        ...user,
-        token: this.getJwtToken({ id: user.id }),
-      };
-    } catch (error) {
-      this.handleDBError(error);
-    }
-  }
-
   // Método para iniciar sesión de un usuario.
   async login(loginUserDto: LoginUserDto) {
     const { password, email } = loginUserDto;
@@ -87,6 +60,54 @@ export class AuthService {
     console.log(error);
 
     throw new InternalServerErrorException('Please check server logs');
+  }
+
+  // Método para crear un nuevo usuario.
+  async create(createUserDto: CreateUserDto) {
+    try {
+      const { password, ...userData } = createUserDto;
+
+      // Crea un nuevo usuario y encripta su contraseña.
+      const user = this.userRepository.create({
+        ...userData,
+        password: bcrypt.hashSync(password, 10),
+      });
+
+      // Guarda el usuario en la base de datos.
+      await this.userRepository.save(user);
+
+      // Elimina la contraseña del objeto user.
+      delete user.password;
+
+      // Retorna el usuario creado junto con su token JWT.
+      return {
+        ...user,
+        token: this.getJwtToken({ id: user.id }),
+      };
+    } catch (error) {
+      this.handleDBError(error);
+    }
+  }
+
+  async findOrCreate42User(profile: any): Promise<User> {
+    const { id, _json } = profile;
+  
+    let user = await this.userRepository.findOne({ where: { email: _json.email } });
+
+  
+    if (!user) {
+      // Crear un nuevo usuario si no existe
+      user = this.userRepository.create({
+        // Asigne los valores adecuados del perfil a los campos del usuario
+        email: _json.email,
+        name: _json.first_name,
+        lastName: _json.last_name,
+      });
+  
+      await this.userRepository.save(user);
+    }
+  
+    return user;
   }
 }
 
