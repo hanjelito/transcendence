@@ -6,7 +6,7 @@ import { DataSource, Repository } from 'typeorm';
 import { validate as isUUID } from 'uuid';
 
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { ChatImage, Chat } from './entities';
+import { ChatUsers, Chat } from './entities';
 import { User } from '../auth/entities/user.entity';
 
 
@@ -19,8 +19,8 @@ export class ChatService {
     @InjectRepository(Chat)
     private chatRepository: Repository<Chat>,
 
-    @InjectRepository(ChatImage)
-    private chatImageRepository: Repository<ChatImage>,
+    @InjectRepository(ChatUsers)
+    private chatUsersRepository: Repository<ChatUsers>,
 
     private readonly: DataSource
 
@@ -58,7 +58,7 @@ export class ChatService {
           slug: identifier.toLowerCase(),
         }
       )
-      .leftJoinAndSelect('chat.images', 'chatImage')
+      .leftJoinAndSelect('chat.images', 'chatUsers')
       .getOne();
     }
 
@@ -68,7 +68,7 @@ export class ChatService {
     return chat;
   }
 
-  //plain chatImage call controller
+  //plain chatUsers call controller
   async findOnePlain( term: string )
   {
     const { images = [], ...rest } = await this.findOne( term);
@@ -85,7 +85,7 @@ export class ChatService {
       const chat = this.chatRepository.create({
         ...chatDetails,
         user,
-        images: images.map( image => this.chatImageRepository.create( {url: image}) )
+        images: images.map( image => this.chatUsersRepository.create( {url: image}) )
       });
 
       await this.chatRepository.save(chat);
@@ -115,10 +115,10 @@ export class ChatService {
 
       if ( images )
       {
-        await queryRunner.manager.delete( ChatImage, { chat: { id } });
+        await queryRunner.manager.delete( ChatUsers, { chat: { id } });
 
         chat.images = images.map(
-          image => this.chatImageRepository.create( { url: image})
+          image => this.chatUsersRepository.create( { url: image})
         );
       }
 
