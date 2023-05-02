@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { CreateChatUserDto } from './dto/create-chat-user.dto';
@@ -7,8 +7,6 @@ import { Chat } from 'src/chat/entities';
 import { ChatUser } from './entities/chat-user.entity';
 import { EntityNotFoundError, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
-import { throws } from 'assert';
-import { CustomExceptionFilter } from 'src/filters/custom-exception.filter';
 import { ExceptionService } from 'src/services/exception.service';
 
 @Injectable()
@@ -27,31 +25,6 @@ export class ChatUserService {
 
 
   ) {}
-
-  // async create(createChatUserDto: CreateChatUserDto, user: User) {
-  //   try {
-  //     const { chatId, ...chatUserDetails } = createChatUserDto;
-  
-  //     if (!isUUID(chatId))
-  //       throw new NotFoundException(`Chat with id ${chatId} not found`);
-  
-  //     const chat = await this.chatRepository.findOneBy({ id: chatId });
-  
-  //     if (!chat) 
-  //       throw new NotFoundException(`No existe el chat con id ${chatId}`);
-  
-  //     const chatUser = this.chatUsersRepository.create(chatUserDetails);
-  //     chatUser.chat = chat;
-  //     chatUser.user = user;
-  
-  //     await this.chatUsersRepository.save(chatUser);
-  
-  //     return { ...chatUser };
-  
-  //   } catch (error) {
-  //     this.handleDBExceptions(error);
-  //   }
-  // }
 
   async create(createChatUserDto: CreateChatUserDto, user: User) {
     try {
@@ -81,7 +54,8 @@ export class ChatUserService {
       chatUser.user = user;
   
       await this.chatUsersRepository.save(chatUser);
-  
+
+      // retorna el chatUser creado con el usuario y el chat
       return { ...chatUser };
   
     } catch (error) {
