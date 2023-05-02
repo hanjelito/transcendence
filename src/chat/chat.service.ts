@@ -6,8 +6,9 @@ import { DataSource, Repository } from 'typeorm';
 import { validate as isUUID } from 'uuid';
 
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { ChatUsers, Chat } from './entities';
+import { Chat } from './entities';
 import { User } from '../auth/entities/user.entity';
+import { ChatUser } from '../chat-user/entities/chat-user.entity';
 
 
 @Injectable()
@@ -19,8 +20,8 @@ export class ChatService {
     @InjectRepository(Chat)
     private chatRepository: Repository<Chat>,
 
-    @InjectRepository(ChatUsers)
-    private chatUsersRepository: Repository<ChatUsers>,
+    @InjectRepository(ChatUser)
+    private chatUsersRepository: Repository<ChatUser>,
 
     private readonly: DataSource
 
@@ -34,13 +35,13 @@ export class ChatService {
       take: limit,
       skip: offset,
       relations: {
-        images: true,
+        chatUser: true,
       },
     });
     // aplano las imagenes
-    return chat.map( ({ images, ...res}) => ({
+    return chat.map( ({ chatUser, ...res}) => ({
       ...res,
-      images: images.map( img => img.url)
+
     }))
   }
 
@@ -71,27 +72,27 @@ export class ChatService {
   //plain chatUsers call controller
   async findOnePlain( term: string )
   {
-    const { images = [], ...rest } = await this.findOne( term);
+    const { ...rest } = await this.findOne( term );
     return {
       ...rest,
-      images: images.map( image => image.url )
+      // chatUser: chatUser.map( user => user.url)
     }
   }
 
   async create(createChatDto: CreateChatDto, user: User) {
     try {
-      const { images = [], ...chatDetails } = createChatDto;
-
-      const chat = this.chatRepository.create({
-        ...chatDetails,
-        user,
-        images: images.map( image => this.chatUsersRepository.create( {url: image}) )
-      });
-
+      const { ...chatDetails } = createChatDto;
+  
+      // Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
+      const chat = new Chat();
+      Object.assign(chat, chatDetails);
+      chat.user = user;
+  
+      // Guardar la instancia de Chat en la base de datos
       await this.chatRepository.save(chat);
-      //retorno el chat con las imagenes
-      return {...chat, images};
-
+  
+      // Retornar el chat creado
+      return { ...chat };
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -100,7 +101,7 @@ export class ChatService {
   async update(id: string, updateChatDto: UpdateChatDto, user: User)
   {
 
-    const { images, ...toUpdate } = updateChatDto;
+    const { chatUser, ...toUpdate } = updateChatDto;
 
     const chat = await this.chatRepository.preload({ id, ...toUpdate });
     
@@ -113,11 +114,11 @@ export class ChatService {
 
     try {
 
-      if ( images )
+      if ( chatUser )
       {
-        await queryRunner.manager.delete( ChatUsers, { chat: { id } });
+        await queryRunner.manager.delete( ChatUser, { chat: { id } });
 
-        chat.images = images.map(
+        chat.chatUser = chatUser.map(
           image => this.chatUsersRepository.create( { url: image})
         );
       }

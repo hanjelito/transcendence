@@ -28,5 +28,5 @@ export class CreateChatDto {
 	@IsString({ each: true })
 	@IsArray()
 	@IsOptional()
-	images: string[];
+	chatUser: string[];
 }

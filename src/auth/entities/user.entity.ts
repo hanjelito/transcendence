@@ -4,8 +4,8 @@ import {
 	OneToMany, PrimaryGeneratedColumn
 } from "typeorm";
 
-import { before } from "node:test";
 import { Chat } from "../../chat/entities";
+import { ChatUser } from "../../chat-user/entities/chat-user.entity";
 
 
 // @Entity() define la clase como una entidad de TypeORM.
@@ -86,6 +86,12 @@ export class User {
 	// Relación uno a muchos entre el usuario y el chat.
 	chat: Chat
 
+	@OneToMany(
+		() => ChatUser,
+		( chatUsers ) => chatUsers.user,
+	)
+	// Relación uno a muchos entre el usuario y el chat.
+	chatUser: ChatUser
 
 	// Método que se ejecuta antes de insertar un nuevo registro de usuario en la base de datos.
 	// Convierte el email a minúsculas.

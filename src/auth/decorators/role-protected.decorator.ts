@@ -1,5 +1,4 @@
 import { SetMetadata } from '@nestjs/common';
-import { ValidRoles, JwtPayload } from '../interfaces';
 
 // Constante META_ROLES que contiene la clave de metadatos para almacenar roles.
 export const META_ROLES = 'roles';

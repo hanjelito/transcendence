@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { CustomExceptionFilter } from './filters/custom-exception.filter';
 
 // Función bootstrap que inicia la aplicación NestJS.
 async function bootstrap() {
   // Crea una instancia de la aplicación utilizando el módulo principal (AppModule).
   const app = await NestFactory.create(AppModule);
-
+  // Agrega un filtro global para manejar las excepciones.
+  app.useGlobalFilters(new CustomExceptionFilter());
   // Establece un prefijo global para todas las rutas de la aplicación.
   app.setGlobalPrefix('api');
 

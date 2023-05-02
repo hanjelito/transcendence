@@ -1,7 +1,7 @@
 import {Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToMany, ManyToOne } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { ChatUsers } from './chat-users.entity';
 import { User } from '../../auth/entities/user.entity';
+import { ChatUser } from 'src/chat-user/entities/chat-user.entity';
 
 @Entity()
 export class Chat {
@@ -40,21 +40,20 @@ export class Chat {
 
 	// many to many relationship with chatUsers
 	@OneToMany(
-		() => ChatUsers,
+		() => ChatUser,
 		(chatUsers) => chatUsers.chat,
 		// eager: true, call the images when the chat is called
-		{cascade: true, eager: true}
+		{ cascade: true, eager: true }
 	)
-	images?: ChatUsers[];
+	chatUser: ChatUser[];
 
 	@ManyToOne(
 		() => User,
 		( user ) => user.chat,
-		{ eager: true},
+		{ eager: true },
 	)
-	user: User
-
-
+	user: User;
+	
 
 	// @Column('text', {
 	// 	array: true,
