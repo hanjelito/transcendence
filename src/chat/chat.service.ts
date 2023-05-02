@@ -109,13 +109,16 @@ export class ChatService {
 
     // create query runner
     const queryRunner = this.readonly.createQueryRunner();
+    // establecer conexion con la base de datos 
     await queryRunner.connect();
+    // hace la transaccion en el caso que falle hace rollback
     await queryRunner.startTransaction();
 
     try {
 
       if ( chatUser )
       {
+        // eliminar las imagenes anteriores
         await queryRunner.manager.delete( ChatUser, { chat: { id } });
 
         chat.chatUser = chatUser.map(

@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+
 import { ChatUserService } from './chat-user.service';
 import { CreateChatUserDto } from './dto/create-chat-user.dto';
-import { UpdateChatUserDto } from './dto/update-chat-user.dto';
 import { Auth, ValidRoles } from '../auth/interfaces';
-import { Request } from 'express';
-import { ChatUser } from './entities/chat-user.entity';
 import { GetUser } from 'src/auth/decorators';
 import { User } from 'src/auth/entities/user.entity';
 
+@ApiTags('User Chat - Channels')
 @Controller('chat-user')
 @Auth(ValidRoles.user)
 export class ChatUserController {

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
@@ -7,7 +8,9 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { Auth, ValidRoles } from '../auth/interfaces';
 import { GetUser } from '../auth/decorators';
 import { User } from '../auth/entities/user.entity';
+import { Chat } from './entities';
 
+@ApiTags('Chat')
 @Controller('chat')
 @Auth(ValidRoles.admin)
 export class ChatController {
@@ -26,6 +29,9 @@ export class ChatController {
   }
 
   @Post()
+  @ApiResponse({ status: 201, description: 'Chat was Created', type: Chat })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 403, description: 'Forbidden, Token related' })
   create(
     @Body() createChatDto: CreateChatDto,
     @GetUser() user: User,

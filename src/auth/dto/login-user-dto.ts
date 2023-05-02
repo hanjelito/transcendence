@@ -1,9 +1,14 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsEmail, IsString, Matches, MaxLength, MinLength } from "class-validator";
 
 // Clase LoginUserDto para la validación de los datos del usuario al iniciar sesión.
 export class LoginUserDto
 {
+	@ApiProperty({
+		description: 'Email',
+		maxLength: 30,
+	})
 	@IsString()
 	@IsEmail()
 	@Transform(({ value }) => value.toLowerCase())
@@ -11,6 +16,11 @@ export class LoginUserDto
 	// Transforma el valor de la propiedad email a minúsculas.
 	email: string;
 
+	@ApiProperty({
+		description: 'Password',
+		maxLength: 30,
+		format: 'password',
+	})
 	@IsString()
 	@MinLength(6)
 	@MaxLength(20)

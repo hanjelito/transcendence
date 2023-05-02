@@ -1,6 +1,10 @@
 import { Controller, Get, Post, Body, UseGuards, Req, Headers, SetMetadata } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import { IncomingHttpHeaders } from 'http';
+
 import { CreateUserDto, LoginUserDto } from './dto/';
 import { AuthService } from './auth.service';
 import { User } from './entities/user.entity';
@@ -9,17 +13,18 @@ import { UserRoleGuard } from './guards/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
 import { Auth, ValidRoles } from './interfaces';
 
-import {ConfigService } from '@nestjs/config';
-import { Request } from 'express';
 
 // AuthController es el controlador encargado de gestionar
 // las acciones relacionadas con la autenticación.
+@ApiTags('Login Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService
   ) {}
+
+  
 
   // Ruta de registro de nuevos usuarios.
   @Post('register')
@@ -40,46 +45,50 @@ export class AuthController {
     return this.authService.checkAuthStatus(user);
   }
 
-  // Ruta privada de prueba con diferentes decoradores y guardias.
-  @Get('private')
-  @UseGuards(AuthGuard())
-  testingPrivateRoute(
-    @GetUser() user: User,
-    @GetUser('email') userEmail: string,
-    @RawHeaders() rawHeaders: string[],
-    @Headers() headers: IncomingHttpHeaders,
-  ) {
-    return {
-      ok: true,
-      message: 'This is a private route',
-      user,
-      userEmail,
-      rawHeaders,
-      headers,
-    };
-  }
+  /**
+   * Ejemplo de rutas privadas con diferentes decoradores y guardias.
+   */
+  // // Ruta privada de prueba con diferentes decoradores y guardias.
+  // @Get('private')
+  // @UseGuards(AuthGuard())
+  // testingPrivateRoute(
+  //   @GetUser() user: User,
+  //   @GetUser('email') userEmail: string,
+  //   @RawHeaders() rawHeaders: string[],
+  //   @Headers() headers: IncomingHttpHeaders,
+  // ) {
+  //   return {
+  //     ok: true,
+  //     message: 'This is a private route',
+  //     user,
+  //     userEmail,
+  //     rawHeaders,
+  //     headers,
+  //   };
+  // }
 
-  // Ruta privada de prueba con protección de roles.
-  @Get('private2')
-  @RoleProtected(ValidRoles.superUser, ValidRoles.admin, ValidRoles.user)
-  @UseGuards(AuthGuard(), UserRoleGuard)
-  privateRoute2(@GetUser() user: User) {
-    return {
-      ok: true,
-      user,
-    };
-  }
+  // // Ruta privada de prueba con protección de roles.
+  // @Get('private2')
+  // @RoleProtected(ValidRoles.superUser, ValidRoles.admin, ValidRoles.user)
+  // @UseGuards(AuthGuard(), UserRoleGuard)
+  // privateRoute2(@GetUser() user: User) {
+  //   return {
+  //     ok: true,
+  //     user,
+  //   };
+  // }
 
-  // Ruta privada de prueba con protección de roles utilizando el decorador Auth().
-  @Get('private3')
-  @Auth(ValidRoles.admin)
-  privateRoute3(@GetUser() user: User) {
-    return {
-      ok: true,
-      user,
-    };
-  }
+  // // Ruta privada de prueba con protección de roles utilizando el decorador Auth().
+  // @Get('private3')
+  // @Auth(ValidRoles.admin)
+  // privateRoute3(@GetUser() user: User) {
+  //   return {
+  //     ok: true,
+  //     user,
+  //   };
+  // }
   //
+  
   @Get('42')
   @UseGuards(AuthGuard('42'))
   fortyTwoLogin() {
@@ -98,7 +107,7 @@ export class AuthController {
     return jwt;
     // Puedes generar un token JWT aquí y redirigir al usuario a la aplicación cliente
     // o hacer lo que necesites con los datos del usuario.
-    return req.user;
+    // return req.user;
   }
 }
 
