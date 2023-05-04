@@ -1,69 +1,91 @@
 import { WebSocketGateway, SubscribeMessage, MessageBody, OnGatewayInit, WebSocketServer, ConnectedSocket } from '@nestjs/websockets';
 import { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
-import { Namespace, Socket } from 'socket.io';
+import { Namespace, Socket, Server } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
 import { MessageWsService } from './message-ws.service';
 import { CreateMessageWDto } from './dto/create-message-w.dto';
 import { UpdateMessageWDto } from './dto/update-message-w.dto';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from 'src/auth/interfaces';
 
 @WebSocketGateway({
     namespace: 'message-ws',
 })
 export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  private readonly logger = new Logger(MessageWsGateway.name);
-  constructor(private readonly messageWsService: MessageWsService) {}
+    private readonly logger = new Logger(MessageWsGateway.name);
+    constructor(
+        private readonly messageWsService: MessageWsService,
+        private readonly jwtService: JwtService,
+    ) {}
 
-  @WebSocketServer() io: Namespace;
-
-  afterInit() {
-    this.logger.log("Websocket Gateway initialized");
-  }
-
-  handleConnection(client: Socket) {
+    @WebSocketServer()
+    wss: Server;
     
-    const socket = this.io.sockets;
-  
-    this.logger.log(`WS Client with id: ${client.id} connected`);
-    this.logger.debug(`Number of connected clients: ${socket.size}`);
-
-    this.io.emit("hello", `from ${client.id}`);
-  }  
-  
-  handleDisconnect(client: Socket) {
-    const socket = this.io.sockets;
-  
-    this.logger.log(`Disconnected socket id ${client.id} `);
-    this.logger.debug(`Number of connected clients: ${socket.size}`);
-
-    // this.io.emit("hello from", client.id);
-  }
-
-  // postman
-  // {
-  //   "event": "message",
-  //   "data": {
-  //     "content": "Hola, este es un mensaje de prueba"
-  //   }
-  // }
-  
-  
-  @SubscribeMessage('message')
-  async handleMessage(@MessageBody() message: CreateMessageWDto, @ConnectedSocket() client: Socket): Promise<void> {
-    // Logica para manejar el mensaje, por ejemplo, guardar en base de datos
-    this.messageWsService.create(message);
-    console.log(message);
-
-    // Emitir el mensaje a todos los clientes conectados menos a quien lo envio
-    client.broadcast.emit('message', message);
-    // Emitir el mensaje a todos los clientes conectados
-    // this.io.emit('message', message);
-  }
 
 
+    afterInit() {
+        this.logger.log("Websocket Gateway initialized");
+    }
 
-  
+    handleConnection(client: Socket) {
+
+        const token = client.handshake.headers.bearer_token as string;
+        let payload: JwtPayload;
+        
+        try{
+            payload = this.jwtService.verify(token);
+        }catch(error){
+            client.disconnect(true);
+            console.log("Error al validar el token");
+            return;
+        }
+
+        console.log({ payload });
+
+        this.messageWsService.registerClient( client );
+        this.wss.emit('clients-updated', this.messageWsService.getConnectedClients() );    
+    } 
+    
+    handleDisconnect(client: Socket) {
+
+        this.messageWsService.removeClient( client.id );
+        this.wss.emit('clients-updated', this.messageWsService.getConnectedClients() );
+
+    }
+
+    // postman
+    // {
+    //     "event": "message",
+    //     "data": {
+    //       "content": "Hola, este es un mensaje de prueba"
+    //     }
+    // }
+    
+    
+
+
+    @SubscribeMessage('message-client')
+    async handleMessage(client: Socket, payload: CreateMessageWDto) {
+        try {
+
+            const structMessage = new CreateMessageWDto();
+            structMessage.event = payload.event;
+            structMessage.data = payload.data;
+
+            console.log({
+                "id": client.id,
+                "payload": payload,
+            });
+
+            this.wss.emit('clients', "te esuchooooo");
+
+        } catch (error) {
+            console.error("Error al parsear el payload:", error);
+        }
+    }
+
 
   // @SubscribeMessage('createMessageW')
   // create(@MessageBody() createMessageWDto: CreateMessageWDto) {
