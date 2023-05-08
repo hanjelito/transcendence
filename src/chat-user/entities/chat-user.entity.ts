@@ -27,14 +27,14 @@ export class ChatUser
 	url: string;
 
 
-	@IsNotEmpty()
 	@ManyToOne(() => Chat,
-		(chat) => chat.chatUser,
-		{ 
-			nullable: false,
-			onDelete: 'CASCADE',
-		})
+    (chat) => chat.chatUser,
+    { 
+        nullable: false,
+        onDelete: 'CASCADE',
+    })
 	@JoinColumn({ name: 'chatId' })
+	@IsNotEmpty()
 	chat: Chat;
 
 	// @IsNotEmpty()

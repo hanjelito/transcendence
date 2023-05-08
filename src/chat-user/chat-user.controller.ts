@@ -1,11 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ChatUserService } from './chat-user.service';
 import { CreateChatUserDto } from './dto/create-chat-user.dto';
 import { Auth, ValidRoles } from '../auth/interfaces';
 import { GetUser } from 'src/auth/decorators';
 import { User } from 'src/auth/entities/user.entity';
+import { ChatUser } from './entities/chat-user.entity';
 
 @ApiTags('User Chat - Channels')
 @Controller('chat-user')
@@ -19,6 +20,9 @@ export class ChatUserController {
   // }
 
   @Post()
+  @ApiResponse({ status: 201, description: 'Chat User was Created', type: ChatUser })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 403, description: 'Forbidden, Token related' })
   create(
     @Body() createChatUserDto: CreateChatUserDto,
     @GetUser() user: User,
