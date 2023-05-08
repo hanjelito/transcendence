@@ -1,8 +1,9 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
+
 import { Chat } from '../../chat/entities';
 import { User } from '../../auth/entities/user.entity';
-import { ApiProperty } from '@nestjs/swagger';
 
 @Entity()
 export class ChatUser

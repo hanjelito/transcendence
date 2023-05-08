@@ -1,13 +1,13 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-
-import { CreateChatUserDto } from './dto/create-chat-user.dto';
-import { User } from '../auth/entities/user.entity';
-import { Chat } from 'src/chat/entities';
-import { ChatUser } from './entities/chat-user.entity';
 import { EntityNotFoundError, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
-import { ExceptionService } from 'src/services/exception.service';
+
+import { ExceptionService } from '../services/exception.service';
+import { CreateChatUserDto } from './dto/create-chat-user.dto';
+import { User } from '../auth/entities/user.entity';
+import { ChatUser } from './entities/chat-user.entity';
+import { Chat } from '../chat/entities';
 
 @Injectable()
 export class ChatUserService {
@@ -48,7 +48,7 @@ export class ChatUserService {
           message: 'User is already registered in this chat.',
         });
       }
-  
+
       const chatUser = this.chatUsersRepository.create(chatUserDetails);
       chatUser.chat = chat;
       chatUser.user = user;
@@ -57,7 +57,7 @@ export class ChatUserService {
 
       // retorna el chatUser creado con el usuario y el chat
       return { ...chatUser };
-  
+
     } catch (error) {
       // si el error es de tipo EntityNotFoundError, lanzar un error 404
       if (error instanceof EntityNotFoundError) {
@@ -68,7 +68,7 @@ export class ChatUserService {
       }
     }
   }
-  
+
   // findAll() {
   //   return `This action returns all chatUser`;
   // }
