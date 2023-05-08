@@ -29,22 +29,23 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
         this.logger.log("Websocket Gateway initialized");
     }
 
-    handleConnection(client: Socket) {
+    async handleConnection(client: Socket) {
 
         const token = client.handshake.headers.bearer_token as string;
         let payload: JwtPayload;
         
         try{
             payload = this.jwtService.verify(token);
-        }catch(error){
+            // verificar que el usuario este activo
+            await this.messageWsService.registerClient( client, payload.id);
+
+        } catch(error) {
+
             client.disconnect(true);
-            console.log("Error al validar el token");
             return;
         }
+        // console.log({ payload });
 
-        console.log({ payload });
-
-        this.messageWsService.registerClient( client );
         this.wss.emit('clients-updated', this.messageWsService.getConnectedClients() );    
     } 
     
@@ -66,7 +67,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
     
 
 
-    @SubscribeMessage('message-client')
+    @SubscribeMessage('client-message')
     async handleMessage(client: Socket, payload: CreateMessageWDto) {
         try {
 
@@ -74,12 +75,15 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
             structMessage.event = payload.event;
             structMessage.data = payload.data;
 
-            console.log({
-                "id": client.id,
-                "payload": payload,
-            });
+            // console.log({
+            //     "id": client.id,
+            //     "payload": payload,
+            // });
 
-            this.wss.emit('clients', "te esuchooooo");
+            this.wss.emit('message-server',{
+                "id": this.messageWsService.getUserFullName( client.id ),
+                message: structMessage
+            });
 
         } catch (error) {
             console.error("Error al parsear el payload:", error);
