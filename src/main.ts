@@ -4,13 +4,15 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { CustomExceptionFilter } from './filters/custom-exception.filter';
+import { TokenErrorFilter } from './filters/token-error';
 
 // Función bootstrap que inicia la aplicación NestJS.
 async function bootstrap() {
   // Crea una instancia de la aplicación utilizando el módulo principal (AppModule).
   const app = await NestFactory.create(AppModule);
   // Agrega un filtro global para manejar las excepciones.
-  app.useGlobalFilters(new CustomExceptionFilter());
+  // app.useGlobalFilters(new CustomExceptionFilter());
+  app.useGlobalFilters(new CustomExceptionFilter(), new TokenErrorFilter());
   // Establece un prefijo global para todas las rutas de la aplicación.
   app.setGlobalPrefix('api');
 
