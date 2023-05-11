@@ -75,11 +75,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
             structMessage.event = payload.event;
             structMessage.data = payload.data;
 
-            // console.log({
-            //     "id": client.id,
-            //     "payload": payload,
-            // });
-
             this.wss.emit('message-server',{
                 "id": this.messageWsService.getUserFullName( client.id ),
                 message: structMessage

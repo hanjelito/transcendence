@@ -76,7 +76,6 @@ export class Chat {
 	@OneToMany(
 		() => ChatUser,
 		(chatUsers) => chatUsers.chat,
-		// eager: true, call the images when the chat is called
 		{ cascade: true, eager: true }
 	)
 	chatUser: ChatUser[];

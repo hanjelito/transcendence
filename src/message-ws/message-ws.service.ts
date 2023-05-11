@@ -48,10 +48,17 @@ export class MessageWsService {
         return Object.keys( this.connectedClients ).length;
     }
 
-    getUserFullName( socketId: string )
-    {
-        return this.connectedClients[ socketId ].user.name + ' ' + this.connectedClients[ socketId ].user.lastName;
+    getUserFullName( socketId: string ) {
+        try {
+            if (!this.connectedClients[socketId]) {
+                throw new Error("User not found");
+            }
+            return this.connectedClients[socketId].user.name + ' ' + this.connectedClients[socketId].user.lastName;
+        } catch (error) {
+            throw new error;
+        }
     }
+
 
     // create(createMessageWDto: CreateMessageWDto) {
     //   return 'This action adds a new messageW';

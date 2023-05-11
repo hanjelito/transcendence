@@ -52,16 +52,18 @@ export class ChatService {
     if (isUUID(identifier)) {
       chat = await this.chatRepository.findOneBy( { id: identifier } );
     } else {
-      const queryBuilder = this.chatRepository.createQueryBuilder('chat');
-      chat = await queryBuilder.where(
-        'UPPER(name) = :name or slug = :slug', { 
+      chat = await this.chatRepository
+        .createQueryBuilder('chat')
+        .leftJoinAndSelect('chat.chatUser', 'chatUser')
+        .leftJoinAndSelect('chatUser.user', 'user')
+        .leftJoinAndSelect('chat.user', 'chatOwner')
+        .orderBy('chatUser.id', 'ASC')
+        .where('UPPER(chat.name) = :name OR chat.slug = :slug', {
           name: identifier.toUpperCase(),
           slug: identifier.toLowerCase(),
-        }
-      )
-      .leftJoinAndSelect('chat.images', 'chatUsers')
-      .getOne();
-    }
+        })
+        .getOne();
+    }     
 
     if (!chat) {
       throw new NotFoundException(`Chat with id  ${ identifier } not found`);
