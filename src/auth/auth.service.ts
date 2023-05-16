@@ -150,6 +150,16 @@ export class AuthService {
   
     return user;
   }
+
+  async findById(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { email: userId } });
+  
+    if (!user) {
+      throw new Error(`User not found with ID ${userId}`);
+    }
+  
+    return user;
+  }
 }
 
 /**

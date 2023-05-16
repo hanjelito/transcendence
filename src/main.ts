@@ -48,6 +48,8 @@ async function bootstrap() {
 
 
   // Inicia la aplicación en el puerto 3000.
+  app.enableCors();
+  
   await app.listen(3000);
 }
 

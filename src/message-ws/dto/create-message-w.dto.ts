@@ -1,17 +1,58 @@
-import { IsString, IsObject, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, IsObject, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class MessageData {
+class Params {
   @IsString()
-  content: string;
+  @IsOptional()
+  room?: string;
+
+  @IsString()
+  @IsOptional()
+  message?: string;
+
+  @IsString()
+  @IsOptional()
+  event?: string;
+
+  @IsString()
+  @IsOptional()
+  user?: string;
+
+  @IsString()
+  @IsOptional()
+  target?: string;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
+
+  @IsString()
+  @IsOptional()
+  reason?: string;
+
+  @IsString()
+  @IsOptional()
+  mode?: string;
+
+  @IsString()
+  @IsOptional()
+  topic?: string;
+
+  @IsString()
+  @IsOptional()
+  nickname?: string;
 }
 
 export class CreateMessageWDto {
   @IsString()
-  event: string;
+  command: string;
 
   @IsObject()
   @ValidateNested()
-  @Type(() => MessageData)
-  data: MessageData;
+  @Type(() => Params)
+  params: Params;
+
+  @IsString()
+  @IsOptional()
+  timestamp?: string;
 }

@@ -15,5 +15,6 @@ import { ChatUser } from '../chat-user/entities/chat-user.entity';
     TypeOrmModule.forFeature([Chat, ChatUser]),
     AuthModule,
   ],
+  exports: [ChatService],
 })
 export class ChatModule {}
