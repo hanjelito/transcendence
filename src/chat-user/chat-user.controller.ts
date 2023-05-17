@@ -14,10 +14,7 @@ import { ChatUser } from './entities/chat-user.entity';
 export class ChatUserController {
   constructor(private readonly chatUserService: ChatUserService) {}
 
-  // @Post()
-  // create(@Body() createChatUserDto: CreateChatUserDto, @Req() req: Request): Promise<ChatUser> {
-  //   return this.chatUserService.create(createChatUserDto, req);
-  // }
+
 
   @Post()
   @ApiResponse({ status: 201, description: 'Chat User was Created', type: ChatUser })

@@ -45,7 +45,7 @@ export class ChatController {
     @GetUser() user: User,
     @Body() updateChatDto: UpdateChatDto
   ){
-    return this.chatService.update(id, updateChatDto, user);
+    // return this.chatService.update(id, updateChatDto, user);
   }
 
   @Delete(':id')

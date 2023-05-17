@@ -16,18 +16,7 @@ export class ChatUser
 	@PrimaryGeneratedColumn()
 	id: number;
 	
-	@ApiProperty({
-		example: 'https://test.tes',
-		description: 'url of the chat',
-		uniqueItems: true,
-	})
-	@Column({
-		type: 'text',
-		nullable: true,
-	})
-	url: string;
-
-
+	//
 	@ManyToOne(() => Chat,
     (chat) => chat.chatUser,
     { 
@@ -38,17 +27,7 @@ export class ChatUser
 	@IsNotEmpty()
 	chat: Chat;
 
-	// @IsNotEmpty()
-	// @ManyToOne(() => User,
-	// 	(user) => user.chatUser,
-	// 	{ 
-	// 		nullable: false,
-	// 		onDelete: 'CASCADE',
-	// 	}
-	// )
-	// @JoinColumn({ name: 'user_id' })
-	// user: User;
-
+	//
 	@ManyToOne(
 		() => User,
 		( user ) => user.chat,

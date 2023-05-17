@@ -8,12 +8,6 @@ export class CreateChatUserDto {
     required: false,
 		minLength: 6,
 	})
-  @IsString()
-  @IsNotEmpty()
-  url: string;
-
-  // @IsNotEmpty()
-  // userId: string;
 
   @ApiProperty({
 		description: 'Id of the chat',

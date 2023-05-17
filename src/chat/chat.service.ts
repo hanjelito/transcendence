@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +9,10 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Chat } from './entities';
 import { User } from '../auth/entities/user.entity';
 import { ChatUser } from '../chat-user/entities/chat-user.entity';
+import { CustomHttpException } from './exceptions/custom-http-exception';
+import { ChatUserService } from '../chat-user/chat-user.service';
+import { CreateChatUserDto } from '../chat-user/dto/create-chat-user.dto';
+
 
 
 @Injectable()
@@ -22,6 +26,8 @@ export class ChatService {
 
     @InjectRepository(ChatUser)
     private chatUsersRepository: Repository<ChatUser>,
+
+    private readonly chatUserService: ChatUserService,
 
     private readonly: DataSource
 
@@ -76,8 +82,7 @@ export class ChatService {
   {
     const { ...rest } = await this.findOne( term );
     return {
-      ...rest,
-      // chatUser: chatUser.map( user => user.url)
+      ...rest
     }
   }
 
@@ -85,20 +90,38 @@ export class ChatService {
     try {
       const { ...chatDetails } = createChatDto;
   
-      // Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
-      const chat = new Chat();
-      Object.assign(chat, chatDetails);
-      chat.user = user;
+      // Verificar si el chat ya existe
+      const existingChat = await this.chatRepository.findOne({ where: { name: chatDetails.name } });
+      const chatUser = new CreateChatUserDto();
   
-      // Guardar la instancia de Chat en la base de datos
-      await this.chatRepository.save(chat);
+      let chat;
+      if (existingChat) {
+        chatUser.chatId = existingChat.id;
+        return { message: 'El chat ya existe', status: HttpStatus.BAD_REQUEST };
+      } else {
+        // Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
+        chat = new Chat();
+        Object.assign(chat, chatDetails);
+        chat.user = user;
   
-      // Retornar el chat creado
+        // Guardar la instancia de Chat en la base de datos
+        const chatBD : Chat = await this.chatRepository.save(chat);
+        chatUser.chatId = chatBD.id;
+      }
+  
+      await this.chatUserService.create(chatUser, user);
       return { ...chat };
+  
     } catch (error) {
-      this.handleDBExceptions(error);
+      // Lanzar una excepción personalizada
+      if (error instanceof CustomHttpException) {
+        throw error;
+      } else {
+        throw new CustomHttpException('', false, 'Error al crear el chat: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
     }
   }
+  
 
   async update(id: string, updateChatDto: UpdateChatDto, user: User)
   {
@@ -121,11 +144,11 @@ export class ChatService {
       if ( chatUser )
       {
         // eliminar las imagenes anteriores
-        await queryRunner.manager.delete( ChatUser, { chat: { id } });
+        // await queryRunner.manager.delete( ChatUser, { chat: { id } });
 
-        chat.chatUser = chatUser.map(
-          image => this.chatUsersRepository.create( { url: image})
-        );
+        // chat.chatUser = chatUser.map(
+        //   image => this.chatUsersRepository.create()
+        // );
       }
 
       chat.user = user;

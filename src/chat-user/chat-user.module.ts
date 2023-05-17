@@ -16,5 +16,6 @@ import { ExceptionService } from '../services/exception.service';
     //muy importante para usar el auth() en el controller
     AuthModule,
   ],
+  exports: [ChatUserService],
 })
 export class ChatUserModule {}

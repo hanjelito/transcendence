@@ -116,15 +116,17 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
     // Maneja cuando un cliente quiere unirse a un chat.
     async handleJoin(client: Socket, params: any) {
-        const createChatDto = new CreateChatDto();
-        // this.chatService.create(createChatDto, user);
-        const user: User = await this.messageWsService.getUserFromSocket(client);
-
-        // Emitir un mensaje al servidor con la información del usuario que se une.
-        this.wss.emit('message-server',{
-            "id": this.messageWsService.getUserFullName( client.id ),
-            message: params
-        });
+        try {
+            const resiter = await this.messageWsService.getUserChanelRegister(client, params);
+      
+            // Emitir un mensaje al servidor con la información del usuario que se une.
+            this.wss.emit('message-server',{
+                message: resiter
+            });
+        } catch (error) {
+            // Emitir un mensaje de error al cliente.
+            client.emit('error', { message: error.response });
+        }
     }
 
     // Maneja cuando un cliente quiere dejar un chat.
@@ -135,10 +137,10 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
     // Maneja cuando un cliente envía un mensaje privado.
     async handlePrivmsg(client: Socket, params: any) {
         // Emitir un mensaje al servidor con la información del mensaje privado.
-        this.wss.emit('message-server',{
-            "id": this.messageWsService.getUserFullName( client.id ),
-            message: params
-        });
+        // this.wss.emit('message-server',{
+        //     "id": this.messageWsService.getUserFullName( client.id ),
+        //     message: params
+        // });
     }
 
     // Maneja cuando un cliente quiere expulsar a otro.

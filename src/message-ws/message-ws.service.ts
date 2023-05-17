@@ -1,5 +1,5 @@
 // Importaciones necesarias para el servicio.
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'socket.io';
 import { Repository } from 'typeorm';
@@ -63,7 +63,7 @@ export class MessageWsService {
     }
 
     // Función para obtener el nombre completo de un usuario a partir de su socketId.
-    getUserFullName( socketId: string ) {
+    async getUserFullName( socketId: string ) {
         try {
             // Si el cliente no existe, lanza un error.
             if (!this.connectedClients[socketId]) {
@@ -77,15 +77,24 @@ export class MessageWsService {
     }
 
     // Método para obtener el usuario asociado a un socket.
-    async getUserFromSocket(client: Socket): Promise<User> {
-        // const chatDto = CreateChatDto();
+    async getUserChanelRegister(client: Socket, params: any)
+    {
         try {
-            // this.chatService.create(createChatDto, user);
+            const user: User = this.connectedClients[ client.id ].user
+            const chatDto = new  CreateChatDto();
+
+
+            chatDto.name        = params.room;
+            chatDto.description = params.topic ?? null;
+            chatDto.password    = params.password ?? null;
+            chatDto.private     = params.password ? true: false;
+            // //
+            ;
+            return this.chatService.create(chatDto, user);
             
             // Emitir un mensaje al servidor con la información del usuario.
         } catch (error) {
-            console.error("Error al parsear el payload:", error);
+            throw new BadRequestException('Error al registrar el usuario en el canal: ' + error.message);
         }
-        return;
     }
 }

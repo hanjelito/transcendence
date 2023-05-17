@@ -7,13 +7,14 @@ import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { Chat } from './entities';
 import { ChatUser } from '../chat-user/entities/chat-user.entity';
+import { ChatUserModule } from 'src/chat-user/chat-user.module';
 
 @Module({
   controllers: [ChatController],
   providers: [ChatService],
   imports: [
     TypeOrmModule.forFeature([Chat, ChatUser]),
-    AuthModule,
+    AuthModule, ChatUserModule,
   ],
   exports: [ChatService],
 })
