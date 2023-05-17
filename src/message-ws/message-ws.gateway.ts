@@ -14,6 +14,7 @@ import { JwtPayload } from 'src/auth/interfaces';
 import { AuthService } from 'src/auth/auth.service';
 
 // Decorador para crear un gateway WebSocket con el namespace 'message-ws'.
+// ws://localhost:3000/message-ws
 @WebSocketGateway({
     namespace: 'message-ws',
 })
@@ -114,18 +115,40 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
         }
     }
 
+    // {
+    //     "command": "JOIN",
+    //     "params": {
+    //       "room": "llegando a casa",
+    //       "message": "",
+    //       "event": "",
+    //       "user": "",
+    //       "target": "",
+    //       "password": "12345",
+    //       "reason": "",
+    //       "mode": "",
+    //       "topic": "hola jugadores",
+    //       "nickname": ""
+    //     },
+    //     "timestamp": "TIME_STAMP_OR_NULL"
+    //   }
+
     // Maneja cuando un cliente quiere unirse a un chat.
     async handleJoin(client: Socket, params: any) {
         try {
-            const resiter = await this.messageWsService.getUserChanelRegister(client, params);
+            const channel = await this.messageWsService.getUserChanelRegister(client, params);
       
             // Emitir un mensaje al servidor con la información del usuario que se une.
-            this.wss.emit('message-server',{
-                message: resiter
-            });
+
+            // this.wss.emit('message-server',{
+            //     response: channel
+            // });
+            client.emit('message-server',{
+                response: channel
+              });
         } catch (error) {
             // Emitir un mensaje de error al cliente.
-            client.emit('error', { message: error.response });
+            client.emit('error', { response: error.response });
+            
         }
     }
 

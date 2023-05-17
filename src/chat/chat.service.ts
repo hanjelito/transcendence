@@ -85,19 +85,18 @@ export class ChatService {
       ...rest
     }
   }
-
+  
   async create(createChatDto: CreateChatDto, user: User) {
     try {
       const { ...chatDetails } = createChatDto;
   
       // Verificar si el chat ya existe
-      const existingChat = await this.chatRepository.findOne({ where: { name: chatDetails.name } });
+      let existingChat = await this.chatRepository.findOne({ where: { name: chatDetails.name } });
       const chatUser = new CreateChatUserDto();
   
       let chat;
       if (existingChat) {
         chatUser.chatId = existingChat.id;
-        return { message: 'El chat ya existe', status: HttpStatus.BAD_REQUEST };
       } else {
         // Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
         chat = new Chat();
@@ -107,10 +106,11 @@ export class ChatService {
         // Guardar la instancia de Chat en la base de datos
         const chatBD : Chat = await this.chatRepository.save(chat);
         chatUser.chatId = chatBD.id;
+        existingChat = chatBD;
       }
   
-      await this.chatUserService.create(chatUser, user);
-      return { ...chat };
+      const chatUserBD = await this.chatUserService.create(chatUser, user);
+      return { chat: existingChat, register: chatUserBD.status};
   
     } catch (error) {
       // Lanzar una excepción personalizada
@@ -121,7 +121,6 @@ export class ChatService {
       }
     }
   }
-  
 
   async update(id: string, updateChatDto: UpdateChatDto, user: User)
   {

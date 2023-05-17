@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
+import { Chat } from 'src/chat/entities';
 
 // Definición de la interfaz ConnectClient.
 interface ConnectClient {
@@ -81,20 +82,38 @@ export class MessageWsService {
     {
         try {
             const user: User = this.connectedClients[ client.id ].user
-            const chatDto = new  CreateChatDto();
+            const ChatSend = new  CreateChatDto();
+            let returnchatDto = new Chat;
+            let result;
 
 
-            chatDto.name        = params.room;
-            chatDto.description = params.topic ?? null;
-            chatDto.password    = params.password ?? null;
-            chatDto.private     = params.password ? true: false;
+            ChatSend.name        = params.room;
+            ChatSend.description = params.topic ?? null;
+            if ((params.password).length > 1)
+            {
+                ChatSend.password    = params.password ?? null;
+                ChatSend.private     = params.password ? true: false;
+            }
             // //
-            ;
-            return this.chatService.create(chatDto, user);
+            result  =  await this.chatService.create(ChatSend, user);
+            
+            //
+            if (result.chat.chatUser)
+                delete result.chat.chatUser;
+
+            returnchatDto = this.filterChatFields(result.chat);
+
+            return {returnchatDto, register: result.register};
             
             // Emitir un mensaje al servidor con la información del usuario.
         } catch (error) {
             throw new BadRequestException('Error al registrar el usuario en el canal: ' + error.message);
         }
     }
+
+    filterChatFields(chat) {
+        const { user, password, ...chatWithoutUserAndPassword } = chat;
+        const { password: userPassword, roles, images, isActive, email, ...userWithoutSensitiveInfo } = user;
+        return { ...chatWithoutUserAndPassword, user: userWithoutSensitiveInfo };
+      }
 }

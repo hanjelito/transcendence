@@ -27,7 +27,6 @@ export class ChatUserService {
   ) {}
 
   async create(createChatUserDto: CreateChatUserDto, user: User) {
-    console.log(createChatUserDto);
     try {
       const { chatId, ...chatUserDetails } = createChatUserDto;
   
@@ -43,11 +42,11 @@ export class ChatUserService {
       const existingChatUser = await this.chatUsersRepository.findOneBy({ chat: { id: chatId }, user: { id: user.id } });
   
       if (existingChatUser) {
-        // Si ya existe un registro, lanzar un error o devolver el registro existente
-        throw new ConflictException({
-          chat: existingChatUser.chat,
-          message: 'User is already registered in this chat.',
-        });
+        return {
+          message: "Canal existente",
+          status: false,
+          channel: existingChatUser
+        };
       }
 
       const chatUser = this.chatUsersRepository.create(chatUserDetails);
@@ -57,7 +56,11 @@ export class ChatUserService {
       await this.chatUsersRepository.save(chatUser);
 
       // retorna el chatUser creado con el usuario y el chat
-      return { ...chatUser };
+      return {
+        message: "Canal nuevo",
+        status: true,
+        channel: chatUser
+      };
 
     } catch (error) {
       // si el error es de tipo EntityNotFoundError, lanzar un error 404
