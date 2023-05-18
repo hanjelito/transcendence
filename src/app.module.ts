@@ -6,6 +6,7 @@ import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { ChatUserModule } from './chat-user/chat-user.module';
 import { MessageWsModule } from './message-ws/message-ws.module';
+import { GameWsModule } from './game-ws/game-ws.module';
 
 // La clase AppModule es el módulo principal de la aplicación
 // y se encarga de importar todos los módulos necesarios.
@@ -29,6 +30,7 @@ import { MessageWsModule } from './message-ws/message-ws.module';
     ChatModule,
     ChatUserModule,
     MessageWsModule,
+    GameWsModule,
   ],
 
   // No hay controladores a nivel de AppModule.

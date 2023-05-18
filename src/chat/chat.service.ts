@@ -18,182 +18,184 @@ import { CreateChatUserDto } from '../chat-user/dto/create-chat-user.dto';
 @Injectable()
 export class ChatService {
 
-  private readonly logger = new Logger('ChatService');
+	private readonly logger = new Logger('ChatService');
 
-  constructor(
-    @InjectRepository(Chat)
-    private chatRepository: Repository<Chat>,
+	constructor(
+	@InjectRepository(Chat)
+	private chatRepository: Repository<Chat>,
 
-    @InjectRepository(ChatUser)
-    private chatUsersRepository: Repository<ChatUser>,
+	@InjectRepository(ChatUser)
+	private chatUsersRepository: Repository<ChatUser>,
 
-    private readonly chatUserService: ChatUserService,
+	private readonly chatUserService: ChatUserService,
 
-    private readonly: DataSource
+	private readonly: DataSource
 
-    ) {}
+	) {}
 
 //TODO: add pagination
-  async findAll( PaginationDto: PaginationDto)
-  {
-    const { limit, offset } = PaginationDto;
-    const chat = await this.chatRepository.find({
-      take: limit,
-      skip: offset,
-      relations: {
-        chatUser: true,
-      },
-    });
-    // aplano las imagenes
-    return chat.map( ({ chatUser, ...res}) => ({
-      ...res,
+	async findAll( PaginationDto: PaginationDto)
+	{
+	const { limit, offset } = PaginationDto;
+	const chat = await this.chatRepository.find({
+		take: limit,
+		skip: offset,
+		relations: {
+		chatUser: true,
+		},
+	});
+	// aplano las imagenes
+	return chat.map( ({ chatUser, ...res}) => ({
+		...res,
 
-    }))
-  }
+	}))
+	}
 
-  async findOne(identifier: string)
-  {
-    let chat: Chat;
-    
-    if (isUUID(identifier)) {
-      chat = await this.chatRepository.findOneBy( { id: identifier } );
-    } else {
-      chat = await this.chatRepository
-        .createQueryBuilder('chat')
-        .leftJoinAndSelect('chat.chatUser', 'chatUser')
-        .leftJoinAndSelect('chatUser.user', 'user')
-        .leftJoinAndSelect('chat.user', 'chatOwner')
-        .orderBy('chatUser.id', 'ASC')
-        .where('UPPER(chat.name) = :name OR chat.slug = :slug', {
-          name: identifier.toUpperCase(),
-          slug: identifier.toLowerCase(),
-        })
-        .getOne();
-    }     
+	async findOne(identifier: string)
+	{
+		let chat: Chat;
+			
+		if (isUUID(identifier)) {
+			chat = await this.chatRepository.findOneBy( { id: identifier } );
+		} else {
+			chat = await this.chatRepository
+			.createQueryBuilder('chat')
+			.leftJoinAndSelect('chat.chatUser', 'chatUser')
+			.leftJoinAndSelect('chatUser.user', 'user')
+			.leftJoinAndSelect('chat.user', 'chatOwner')
+			.orderBy('chatUser.id', 'ASC')
+			.where('UPPER(chat.name) = :name OR chat.slug = :slug', {
+				name: identifier.toUpperCase(),
+				slug: identifier.toLowerCase(),
+			})
+			.getOne();
+		}	 
 
-    if (!chat) {
-      throw new NotFoundException(`Chat with id  ${ identifier } not found`);
-    }
-    return chat;
-  }
+		if (!chat) {
+			throw new NotFoundException(`Chat with id	${ identifier } not found`);
+		}
+		return chat;
+	}
 
-  //plain chatUsers call controller
-  async findOnePlain( term: string )
-  {
-    const { ...rest } = await this.findOne( term );
-    return {
-      ...rest
-    }
-  }
-  
-  async create(createChatDto: CreateChatDto, user: User) {
-    try {
-      const { ...chatDetails } = createChatDto;
-  
-      // Verificar si el chat ya existe
-      let existingChat = await this.chatRepository.findOne({ where: { name: chatDetails.name } });
-      const chatUser = new CreateChatUserDto();
-  
-      let chat;
-      if (existingChat) {
-        chatUser.chatId = existingChat.id;
-      } else {
-        // Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
-        chat = new Chat();
-        Object.assign(chat, chatDetails);
-        chat.user = user;
-  
-        // Guardar la instancia de Chat en la base de datos
-        const chatBD : Chat = await this.chatRepository.save(chat);
-        chatUser.chatId = chatBD.id;
-        existingChat = chatBD;
-      }
-  
-      const chatUserBD = await this.chatUserService.create(chatUser, user);
-      return { chat: existingChat, register: chatUserBD.status};
-  
-    } catch (error) {
-      // Lanzar una excepción personalizada
-      if (error instanceof CustomHttpException) {
-        throw error;
-      } else {
-        throw new CustomHttpException('', false, 'Error al crear el chat: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    }
-  }
+	//plain chatUsers call controller
+	async findOnePlain( term: string )
+	{
+		const { ...rest } = await this.findOne( term );
+		return {
+			...rest
+		}
+	}
+	
+	async create(createChatDto: CreateChatDto, user: User) {
+		try {
+			const { ...chatDetails } = createChatDto;
+		
+			// Verificar si el chat ya existe
+			let existingChat = await this.chatRepository.findOne({ where: { name: chatDetails.name } });
+			const chatUser = new CreateChatUserDto();
+		
+			let chat;
+			if (existingChat) {
+			if(existingChat.password != createChatDto.password )
+				throw new NotFoundException(`Chat	${existingChat.name} have a password is not similar`);
+			chatUser.chatId = existingChat.id;
+			} else {
+				// Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
+				chat = new Chat();
+				Object.assign(chat, chatDetails);
+				chat.user = user;
 
-  async update(id: string, updateChatDto: UpdateChatDto, user: User)
-  {
+				// Guardar la instancia de Chat en la base de datos
+				const chatBD : Chat = await this.chatRepository.save(chat);
+				chatUser.chatId = chatBD.id;
+				existingChat = chatBD;
+			}
 
-    const { chatUser, ...toUpdate } = updateChatDto;
+			const chatUserBD = await this.chatUserService.create(chatUser, user);
+			return { chat: existingChat, register: chatUserBD.status};
 
-    const chat = await this.chatRepository.preload({ id, ...toUpdate });
-    
-    if (!chat) throw new NotFoundException(`Chat with id  ${ id } not found`);
+		} catch (error) {
+			// Lanzar una excepción personalizada
+			if (error instanceof CustomHttpException) {
+			throw error;
+			} else {
+				throw new CustomHttpException('', false, 'Error al crear el chat: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+	}
 
-    // create query runner
-    const queryRunner = this.readonly.createQueryRunner();
-    // establecer conexion con la base de datos 
-    await queryRunner.connect();
-    // hace la transaccion en el caso que falle hace rollback
-    await queryRunner.startTransaction();
+	async update(id: string, updateChatDto: UpdateChatDto, user: User)
+	{
 
-    try {
+		const { chatUser, ...toUpdate } = updateChatDto;
 
-      if ( chatUser )
-      {
-        // eliminar las imagenes anteriores
-        // await queryRunner.manager.delete( ChatUser, { chat: { id } });
+		const chat = await this.chatRepository.preload({ id, ...toUpdate });
+			
+		if (!chat) throw new NotFoundException(`Chat with id	${ id } not found`);
 
-        // chat.chatUser = chatUser.map(
-        //   image => this.chatUsersRepository.create()
-        // );
-      }
+		// create query runner
+		const queryRunner = this.readonly.createQueryRunner();
+		// establecer conexion con la base de datos 
+		await queryRunner.connect();
+		// hace la transaccion en el caso que falle hace rollback
+		await queryRunner.startTransaction();
 
-      chat.user = user;
+		try {
 
-      await queryRunner.manager.save(chat);
+			if ( chatUser )
+			{
+				// eliminar las imagenes anteriores
+				// await queryRunner.manager.delete( ChatUser, { chat: { id } });
 
-      // await this.chatRepository.save(chat);
-      await queryRunner.commitTransaction();
-      await queryRunner.release();
+				// chat.chatUser = chatUser.map(
+				//	 image => this.chatUsersRepository.create()
+				// );
+			}
 
-      return this.findOnePlain( id );
+			chat.user = user;
 
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      await queryRunner.release();
-      this.handleDBExceptions(error);
-    }
-  }
+			await queryRunner.manager.save(chat);
 
-  async remove(id: string)
-  {
-    const Chat = await this.chatRepository.findOneBy( { id } );
-    if (!Chat) {
-      throw new NotFoundException(`Chat with id  ${ id } not found`);
-    }
-    await this.chatRepository.remove(Chat);
-  }
+			// await this.chatRepository.save(chat);
+			await queryRunner.commitTransaction();
+			await queryRunner.release();
 
-  private handleDBExceptions(error: any) {
-    if (error.code === '23505')
-      throw new BadRequestException(error.detail);
-    this.logger.error(error);
-    throw new InternalServerErrorException('Unexpected error, check server logs');
-  }
+			return this.findOnePlain( id );
 
-  async deleteAllChats()
-  {
-    const query = this.chatRepository.createQueryBuilder();
-    try {
-      return await query
-        .delete()
-        .where({})
-        .execute();
-    }
-    catch (error) {
-      this.handleDBExceptions(error);
-    }
-  }
+		} catch (error) {
+			await queryRunner.rollbackTransaction();
+			await queryRunner.release();
+			this.handleDBExceptions(error);
+		}
+	}
+
+	async remove(id: string)
+	{
+		const Chat = await this.chatRepository.findOneBy( { id } );
+		if (!Chat) {
+			throw new NotFoundException(`Chat with id	${ id } not found`);
+		}
+		await this.chatRepository.remove(Chat);
+	}
+
+	private handleDBExceptions(error: any) {
+		if (error.code === '23505')
+			throw new BadRequestException(error.detail);
+		this.logger.error(error);
+		throw new InternalServerErrorException('Unexpected error, check server logs');
+	}
+
+	async deleteAllChats()
+	{
+		const query = this.chatRepository.createQueryBuilder();
+		try {
+			return await query
+			.delete()
+			.where({})
+			.execute();
+		}
+		catch (error) {
+			this.handleDBExceptions(error);
+		}
+	}
 }
