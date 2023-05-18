@@ -57,7 +57,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			client.disconnect(true);
 			return;
 		}
-		console.log("test");
 		// Emite un evento para actualizar la lista de clientes conectados.
 		this.wss.emit('clients-updated', this.messageWsService.getConnectedClients() );	
 	} 
