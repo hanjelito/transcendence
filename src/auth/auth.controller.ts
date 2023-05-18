@@ -7,7 +7,7 @@ import { IncomingHttpHeaders } from 'http';
 
 import { CreateUserDto, LoginUserDto } from './dto/';
 import { AuthService } from './auth.service';
-import { User } from './entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { GetUser, RawHeaders } from './decorators/';
 import { UserRoleGuard } from './guards/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';

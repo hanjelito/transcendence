@@ -9,7 +9,7 @@ import { CreateMessageWDto } from './dto/create-message-w.dto';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { MessageWsService } from './message-ws.service';
 // import { ChatService } from '../chat/chat.service';
-import { User } from '../auth/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { JwtPayload } from 'src/auth/interfaces';
 import { AuthService } from 'src/auth/auth.service';
 

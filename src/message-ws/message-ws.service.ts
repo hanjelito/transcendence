@@ -5,7 +5,7 @@ import { Socket } from 'socket.io';
 import { Repository } from 'typeorm';
 
 // Importación de la entidad User.
-import { User } from '../auth/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { ChatService } from '../chat/chat.service';
 import { CreateChatDto } from '../chat/dto/create-chat.dto';
 import { Chat } from 'src/chat/entities';

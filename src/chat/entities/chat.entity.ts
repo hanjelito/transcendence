@@ -1,6 +1,6 @@
 import {Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToMany, ManyToOne } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { User } from '../../auth/entities/user.entity';
+import { User } from '../../user/entities/user.entity';
 import { ChatUser } from 'src/chat-user/entities/chat-user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 

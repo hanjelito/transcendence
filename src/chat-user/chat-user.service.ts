@@ -5,7 +5,7 @@ import { isUUID } from 'class-validator';
 
 import { ExceptionService } from '../services/exception.service';
 import { CreateChatUserDto } from './dto/create-chat-user.dto';
-import { User } from '../auth/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { ChatUser } from './entities/chat-user.entity';
 import { Chat } from '../chat/entities';
 

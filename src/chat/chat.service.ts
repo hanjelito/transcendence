@@ -7,7 +7,7 @@ import { validate as isUUID } from 'uuid';
 
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Chat } from './entities';
-import { User } from '../auth/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { ChatUser } from '../chat-user/entities/chat-user.entity';
 import { CustomHttpException } from './exceptions/custom-http-exception';
 import { ChatUserService } from '../chat-user/chat-user.service';

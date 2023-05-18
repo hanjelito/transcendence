@@ -5,7 +5,7 @@ import { ChatUserService } from './chat-user.service';
 import { CreateChatUserDto } from './dto/create-chat-user.dto';
 import { Auth, ValidRoles } from '../auth/interfaces';
 import { GetUser } from 'src/auth/decorators';
-import { User } from 'src/auth/entities/user.entity';
+import { User } from 'src/user/entities/user.entity';
 import { ChatUser } from './entities/chat-user.entity';
 
 @ApiTags('User Chat - Channels')

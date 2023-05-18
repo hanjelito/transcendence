@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { LoginUserDto, CreateUserDto } from './dto';
-import { User } from './entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -41,17 +41,16 @@ export class AuthService {
 
   //login with 42 or create user
   async loginOrCreateWith42( user: any ) {
-    const { email, name, lastName, login, password } = user;
+    const { email, name, lastName, login, password, image } = user;
 
     // Busca al usuario por su correo electrónico.
     const userDB = await this.userRepository.findOne({
       where: { email },
       select: { email: true, password: true, id: true },
     });
-
+    console.log(image);
     // Verifica si el correo electrónico coincide.
     if (!userDB) {
-
       // create user
       const newUser = await this.userRepository.save({
         email,
@@ -59,16 +58,17 @@ export class AuthService {
         name,
         lastName,
         login,
+        images: [image.link],
       });
-
+      
+      delete newUser.password;
       // // Retorna el usuario logueado junto con su token JWT.
       return {
         ...newUser,
         token: this.getJwtToken({ id: newUser.id }),
       };
     }
-    // if (!userDB) throw new UnauthorizedException('Credentials are not valid (emailss)');
-
+    
     // Retorna el usuario logueado junto con su token JWT.
     return {
       ...userDB,
@@ -76,10 +76,6 @@ export class AuthService {
     };
   }
     
-
-
-
-
   // Método para verificar el estado de autenticación del usuario.
   async checkAuthStatus(user: User) {
     return {

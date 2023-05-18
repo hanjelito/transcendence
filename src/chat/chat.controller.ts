@@ -7,7 +7,7 @@ import { ChatService } from './chat.service';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { Auth, ValidRoles } from '../auth/interfaces';
 import { GetUser } from '../auth/decorators';
-import { User } from '../auth/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { Chat } from './entities';
 
 @ApiTags('Chat')
