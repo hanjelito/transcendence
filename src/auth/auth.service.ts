@@ -60,7 +60,7 @@ export class AuthService {
         login,
         images: [image.link],
       });
-      
+
       delete newUser.password;
       // // Retorna el usuario logueado junto con su token JWT.
       return {
@@ -68,7 +68,7 @@ export class AuthService {
         token: this.getJwtToken({ id: newUser.id }),
       };
     }
-    
+
     // Retorna el usuario logueado junto con su token JWT.
     return {
       ...userDB,
