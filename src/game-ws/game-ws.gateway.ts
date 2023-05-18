@@ -9,6 +9,7 @@ import { MessageWsGateway } from '../message-ws/message-ws.gateway';
 
 
 @WebSocketGateway({
+	cors: true,
 	namespace: 'game-ws',
 })
 

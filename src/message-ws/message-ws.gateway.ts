@@ -16,6 +16,7 @@ import { AuthService } from 'src/auth/auth.service';
 // Decorador para crear un gateway WebSocket con el namespace 'message-ws'.
 // ws://localhost:3000/message-ws
 @WebSocketGateway({
+	cors: true,
 	namespace: 'message-ws',
 })
 // La clase implementa varias interfaces para manejar eventos del WebSocket.
