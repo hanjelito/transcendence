@@ -33,6 +33,8 @@ export class AuthService {
       throw new UnauthorizedException('Credentials are not valid (password)');
 
     // Retorna el usuario logueado junto con su token JWT.
+    if(user)
+      delete user.password;
     return {
       ...user,
       token: this.getJwtToken({ id: user.id }),
@@ -48,7 +50,6 @@ export class AuthService {
       where: { email },
       select: { email: true, password: true, id: true },
     });
-    console.log(image);
     // Verifica si el correo electrónico coincide.
     if (!userDB) {
       // create user
@@ -94,7 +95,6 @@ export class AuthService {
   private handleDBError(error: any): never {
     if (error.code === '23505')
       throw new BadRequestException(error.detail);
-    console.log(error);
 
     throw new InternalServerErrorException('Please check server logs');
   }
@@ -118,7 +118,7 @@ export class AuthService {
 
       // Retorna el usuario creado junto con su token JWT.
       return {
-        ...user,
+        ...this.filterCreate(user),
         token: this.getJwtToken({ id: user.id }),
       };
     } catch (error) {
@@ -155,6 +155,13 @@ export class AuthService {
     }
   
     return user;
+  }
+
+  // filters
+  filterCreate(user)
+  {
+    const {login, name, lastName, images, isActive, roles, ...newUser} = user;
+    return {...newUser};
   }
 }
 

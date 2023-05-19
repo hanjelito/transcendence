@@ -6,12 +6,11 @@ import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { CreateMessageWDto } from './dto/create-message-w.dto';
-import { CreateChatDto } from '../chat/dto/create-chat.dto';
-import { MessageWsService } from './message-ws.service';
-// import { ChatService } from '../chat/chat.service';
-import { User } from '../user/entities/user.entity';
 import { JwtPayload } from 'src/auth/interfaces';
-import { AuthService } from 'src/auth/auth.service';
+import { MessageWsService, SocketManagerService } from './services';
+// import { AuthService } from 'src/auth/auth.service';
+// import { MessageWsService } from './services/message-ws.service';
+// import { SocketManagerService } from './services/SocketManagerService.service';
 
 // Decorador para crear un gateway WebSocket con el namespace 'message-ws'.
 // ws://localhost:3000/message-ws
@@ -27,13 +26,15 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	constructor(
 		private readonly messageWsService: MessageWsService,
 		private readonly jwtService: JwtService,
-		// private readonly chatService: ChatService,
-		private readonly authService: AuthService,
+		private readonly socketManagerService: SocketManagerService,
+		// private readonly authService: AuthService,
 	) {}
 
 	// Una referencia al servidor WebSocket.
 	@WebSocketServer()
 	wss: Server;
+
+	private clients = new Map<string, string[]>();
 
 	// Método que se ejecuta después de la inicialización del gateway.
 	afterInit() {
@@ -50,6 +51,9 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		// Intenta verificar el token y registra al cliente en el servicio de mensajes.
 		try{
 			payload = this.jwtService.verify(token);
+			//
+			this.socketManagerService.registerClient(payload.id, client.id);
+			//
 			await this.messageWsService.registerClient( client, payload.id);
 
 		} catch(error) {
@@ -63,6 +67,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		
 	// Método que se ejecuta cuando un cliente se desconecta.
 	handleDisconnect(client: Socket) {
+		this.socketManagerService.unregisterClient(client);
 		// Elimina al cliente del registro y actualiza la lista de clientes conectados.
 		this.messageWsService.removeClient( client.id );
 		this.wss.emit('clients-updated', this.messageWsService.getConnectedClients() );
@@ -111,7 +116,8 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 					throw new Error(`Unsupported command: ${command}`);
 			}
 		} catch (error) {
-			console.error("Error al parsear el payload:", error);
+			// console.error("Error al parsear el payload:", error);
+			client.emit('error', { response: error.response });
 		}
 	}
 
@@ -137,11 +143,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		try {
 			const channel = await this.messageWsService.getUserChanelRegister(client, params);
 	  
-			// Emitir un mensaje al servidor con la información del usuario que se une.
-
-			// this.wss.emit('message-server',{
-			//	 response: channel
-			// });
 			client.emit('message-server',{
 				response: channel
 			  });
@@ -152,21 +153,31 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		}
 	}
 
-	// Maneja cuando un cliente quiere dejar un chat.
 	async handlePart(client: Socket, params: any) {
 		// Aquí se añadiría el código para manejar este caso.
 	}
 
-	// Maneja cuando un cliente envía un mensaje privado.
 	async handlePrivmsg(client: Socket, params: any) {
-		// Emitir un mensaje al servidor con la información del mensaje privado.
-		// this.wss.emit('message-server',{
-		//	 "id": this.messageWsService.getUserFullName( client.id ),
-		//	 message: params
-		// });
+		//
+		const idClient = this.messageWsService.getClient(client.id);
+		const idSocketClients = this.socketManagerService.getClients(idClient);
+		console.log('payload.id', idSocketClients, idClient);
+		//
+		if (params.room)
+			this.wss.emit('message-server',{
+				"id": this.messageWsService.getUserFullName( client.id ),
+				message: params,
+				type: "room"
+			});
+		else
+			this.wss.emit('message-server',{
+				"id": this.messageWsService.getUserFullName( client.id ),
+				message: params,
+				type: "private"
+			});
+		
 	}
 
-	// Maneja cuando un cliente quiere expulsar a otro.
 	async handleKick(client: Socket, params: any) {
 		// Aquí se añadiría el código para manejar este caso.
 	}

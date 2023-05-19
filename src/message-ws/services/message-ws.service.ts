@@ -5,10 +5,10 @@ import { Socket } from 'socket.io';
 import { Repository } from 'typeorm';
 
 // Importación de la entidad User.
-import { User } from '../user/entities/user.entity';
-import { ChatService } from '../chat/chat.service';
-import { CreateChatDto } from '../chat/dto/create-chat.dto';
-import { Chat } from 'src/chat/entities';
+import { User } from '../../user/entities/user.entity';
+import { ChatService } from '../../chat/chat.service';
+import { CreateChatDto } from '../../chat/dto/create-chat.dto';
+// import { Chat } from 'src/chat/entities';
 
 // Definición de la interfaz ConnectClient.
 interface ConnectClient {
@@ -49,6 +49,11 @@ export class MessageWsService {
 		};
 	}
 
+	//fucntion para llamar a un cliente
+	getClient(socketId: string)
+	{
+		return this.connectedClients[socketId].user.id;
+	}
 	// Función para eliminar un cliente.
 	removeClient( clientId: string )
 	{
@@ -78,34 +83,29 @@ export class MessageWsService {
 	}
 
 	// Método para obtener el usuario asociado a un socket.
-	async getUserChanelRegister(client: Socket, params: any)
-	{
+
+	async getUserChanelRegister(client: Socket, params: any) {
 		try {
-			const user: User = this.connectedClients[ client.id ].user
-			const ChatSend		= new  CreateChatDto();
-			let returnchatDto	= new Chat;
+			const user: User = this.connectedClients[client.id].user;
 			let result;
 
+			const ChatSend = new CreateChatDto();
+			ChatSend.name = params.room;
+			ChatSend.description = params.topic ?? null;
 
-			ChatSend.name			= params.room;
-			ChatSend.description	= params.topic ?? null;
-			if ((params.password).length > 1)
-			{
-				ChatSend.password	= params.password ?? null;
-				ChatSend.private	= params.password ? true: false;
+			if (params.password && params.password.length > 1) {
+			ChatSend.password = params.password;
+			ChatSend.private = true;
 			}
-			// //
-			result  =  await this.chatService.create(ChatSend, user);
-			
-			//
+
+			result = await this.chatService.create(ChatSend, user);
+
 			if (result.chat.chatUser)
-				delete result.chat.chatUser;
+			delete result.chat.chatUser;
 
-			returnchatDto = this.filterChatFields(result.chat);
+			const returnchatDto = this.filterChatFields(result.chat);
+			return { returnchatDto, register: result.register };
 
-			return {returnchatDto, register: result.register};
-			
-			// Emitir un mensaje al servidor con la información del usuario.
 		} catch (error) {
 			throw new BadRequestException('Error al registrar el usuario en el canal: ' + error.message);
 		}
