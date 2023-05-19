@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from '../auth/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class UserService {
@@ -28,8 +29,15 @@ export class UserService {
     })) ;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(identifier: string) {
+    let user: User;
+    if (isUUID(identifier))
+      user = await this.userRepository.findOneBy( {id: identifier} );
+    
+    if (!user) {
+        throw new NotFoundException(`User with id	${ identifier } not found`);
+    }
+    return user;
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

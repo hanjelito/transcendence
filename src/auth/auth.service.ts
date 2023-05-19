@@ -22,10 +22,7 @@ export class AuthService {
     const { password, email } = loginUserDto;
     
     // Busca al usuario por su correo electrónico.
-    const user = await this.userRepository.findOne({
-      where: { email },
-      select: { email: true, password: true, id: true },
-    });
+    const user = await this.userRepository.findOneBy({ email: email });
 
     // Verifica si el correo electrónico y la contraseña coinciden.
     if (!user) throw new UnauthorizedException('Credentials are not valid (email)');
@@ -33,10 +30,8 @@ export class AuthService {
       throw new UnauthorizedException('Credentials are not valid (password)');
 
     // Retorna el usuario logueado junto con su token JWT.
-    if(user)
-      delete user.password;
     return {
-      ...user,
+      ...this.filterCreate(user),
       token: this.getJwtToken({ id: user.id }),
     };
   }
@@ -80,7 +75,7 @@ export class AuthService {
   // Método para verificar el estado de autenticación del usuario.
   async checkAuthStatus(user: User) {
     return {
-      ...user,
+      ...this.filterCreate(user),
       token: this.getJwtToken({ id: user.id }),
     };
   }
@@ -113,9 +108,6 @@ export class AuthService {
       // Guarda el usuario en la base de datos.
       await this.userRepository.save(user);
 
-      // Elimina la contraseña del objeto user.
-      delete user.password;
-
       // Retorna el usuario creado junto con su token JWT.
       return {
         ...this.filterCreate(user),
@@ -127,7 +119,7 @@ export class AuthService {
   }
 
   async findOrCreate42User(profile: any): Promise<User> {
-    const { id, _json } = profile;
+    const { _json } = profile;
   
     let user = await this.userRepository.findOne({ where: { email: _json.email } });
 
@@ -158,10 +150,10 @@ export class AuthService {
   }
 
   // filters
-  filterCreate(user)
+  filterCreate(user: any)
   {
-    const {login, name, lastName, images, isActive, roles, ...newUser} = user;
-    return {...newUser};
+    const {isActive, roles, password, ...newUser} = user;
+    return { ...newUser };
   }
 }
 

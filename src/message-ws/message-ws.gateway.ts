@@ -2,15 +2,12 @@
 import { WebSocketGateway, SubscribeMessage, MessageBody, OnGatewayInit, WebSocketServer, ConnectedSocket } from '@nestjs/websockets';
 import { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
-import { CreateMessageWDto } from './dto/create-message-w.dto';
-import { JwtPayload } from 'src/auth/interfaces';
-import { MessageWsService, SocketManagerService } from './services';
-// import { AuthService } from 'src/auth/auth.service';
-// import { MessageWsService } from './services/message-ws.service';
-// import { SocketManagerService } from './services/SocketManagerService.service';
+import { CreateMessageWDto, Params } from './dto/create-message-w.dto';
+import { JwtPayload } from '../auth/interfaces';
+import { ChatMessageWsService, MessageWsService, SocketManagerService } from './services';
 
 // Decorador para crear un gateway WebSocket con el namespace 'message-ws'.
 // ws://localhost:3000/message-ws
@@ -25,6 +22,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	private readonly logger = new Logger(MessageWsGateway.name);
 	constructor(
 		private readonly messageWsService: MessageWsService,
+		private readonly chatMessageWsService: ChatMessageWsService,
 		private readonly jwtService: JwtService,
 		private readonly socketManagerService: SocketManagerService,
 		// private readonly authService: AuthService,
@@ -54,41 +52,17 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			//
 			this.socketManagerService.registerClient(payload.id, client.id);
 			//
-			await this.messageWsService.registerClient( client, payload.id);
 
 		} catch(error) {
 			// Si hay un error durante la verificación del token, desconecta al cliente.
 			client.disconnect(true);
 			return;
 		}
-		// Emite un evento para actualizar la lista de clientes conectados.
-		this.wss.emit('clients-updated', this.messageWsService.getConnectedClients() );	
 	} 
 		
 	// Método que se ejecuta cuando un cliente se desconecta.
 	handleDisconnect(client: Socket) {
 		this.socketManagerService.unregisterClient(client);
-		// Elimina al cliente del registro y actualiza la lista de clientes conectados.
-		this.messageWsService.removeClient( client.id );
-		this.wss.emit('clients-updated', this.messageWsService.getConnectedClients() );
-	}
-
-	// Método para manejar mensajes de los clientes.
-	@SubscribeMessage('client-message2')
-	async handleMessage2(client: Socket, payload: CreateMessageWDto) {
-		// Intenta emitir un mensaje con los datos del payload.
-		try {
-			const structMessage = new CreateMessageWDto();
-			structMessage.params = payload.params;
-			structMessage.timestamp = payload.timestamp;
-			this.wss.emit('message-server',{
-				"id": this.messageWsService.getUserFullName( client.id ),
-				message: structMessage
-			});
-
-		} catch (error) {
-			console.error("Error al parsear el payload:", error);
-		}
 	}
 
 	// Otro método para manejar diferentes tipos de mensajes de los clientes.
@@ -113,35 +87,18 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 					await this.handleKick(client, params);
 					break;
 				default:
-					throw new Error(`Unsupported command: ${command}`);
+					throw new NotFoundException(`Unsupported command: ${command}`);
 			}
 		} catch (error) {
-			// console.error("Error al parsear el payload:", error);
 			client.emit('error', { response: error.response });
 		}
 	}
 
-	// {
-	//	 "command": "JOIN",
-	//	 "params": {
-	//	   "room": "llegando a casa",
-	//	   "message": "",
-	//	   "event": "",
-	//	   "user": "",
-	//	   "target": "",
-	//	   "password": "12345",
-	//	   "reason": "",
-	//	   "mode": "",
-	//	   "topic": "hola jugadores",
-	//	   "nickname": ""
-	//	 },
-	//	 "timestamp": "TIME_STAMP_OR_NULL"
-	//   }
-
 	// Maneja cuando un cliente quiere unirse a un chat.
 	async handleJoin(client: Socket, params: any) {
 		try {
-			const channel = await this.messageWsService.getUserChanelRegister(client, params);
+			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
+			const channel = await this.chatMessageWsService.getUserChanelRegister(client, params, idUser);
 	  
 			client.emit('message-server',{
 				response: channel
@@ -157,24 +114,28 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		// Aquí se añadiría el código para manejar este caso.
 	}
 
-	async handlePrivmsg(client: Socket, params: any) {
-		//
-		const idClient = this.messageWsService.getClient(client.id);
-		const idSocketClients = this.socketManagerService.getClients(idClient);
-		console.log('payload.id', idSocketClients, idClient);
-		//
-		if (params.room)
-			this.wss.emit('message-server',{
-				"id": this.messageWsService.getUserFullName( client.id ),
-				message: params,
-				type: "room"
-			});
-		else
-			this.wss.emit('message-server',{
-				"id": this.messageWsService.getUserFullName( client.id ),
-				message: params,
-				type: "private"
-			});
+	async handlePrivmsg(client: Socket, params: Params) {
+		try {
+			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
+			//
+			if (params.room)
+				this.wss.emit('message-server',{
+					// "id": await this.messageWsService.getUserFullName( idUser ),
+					message: await this.messageWsService.getIDsforSockets(params.room),
+					type: "room"
+				});
+			else {
+				const idSocket = this.socketManagerService.getClients(params.target);
+				console.log(idSocket[0]);
+				this.wss.to(idSocket[0]).emit('message-server',{
+					"id": await this.messageWsService.getUserFullName( idUser ),
+					message: params.message,
+					type: "private"
+				});
+			}
+		} catch (error) {
+			client.emit('error', { response: error.response });
+		}
 		
 	}
 

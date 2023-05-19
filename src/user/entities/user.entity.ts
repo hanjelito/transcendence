@@ -67,8 +67,7 @@ export class User {
 		description: 'password of the user login',
 	})
 	@Column({
-		type: 'text',
-		select: false
+		type: 'text'
 	})
 	// Propiedad password del usuario, de tipo texto y no se selecciona por defecto en las consultas.
 	password: string;

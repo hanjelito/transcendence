@@ -11,8 +11,8 @@ export class SocketManagerService {
     } else {
       this.clients.set(userId, [clientId]);
     }
-	console.log(`Client ${clientId} registered for User ${userId}`);
-    console.log('Current state:', this.clients);
+	// console.log(`Client ${clientId} registered for User ${userId}`);
+  //   console.log('Current state:', this.clients);
   }
 
   unregisterClient(client: Socket) {
@@ -25,11 +25,20 @@ export class SocketManagerService {
         this.clients.delete(userId);
       }
     }
-	console.log(`Client ${client.id} unregistered for User ${userId}`);
-    console.log('Current state:', this.clients);
+	// console.log(`Client ${client.id} unregistered for User ${userId}`);
+  //   console.log('Current state:', this.clients);
   }
 
   getClients(userId: string) {
     return this.clients.get(userId) || [];
+  }
+
+  getUserIdBySocketId(socketId: string): string {
+    for (const [userId, socketIds] of this.clients.entries()) {
+      if (socketIds.includes(socketId)) {
+        return userId;
+      }
+    }
+    return null;
   }
 }

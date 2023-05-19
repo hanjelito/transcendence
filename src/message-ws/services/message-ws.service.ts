@@ -6,8 +6,8 @@ import { Repository } from 'typeorm';
 
 // Importación de la entidad User.
 import { User } from '../../user/entities/user.entity';
-import { ChatService } from '../../chat/chat.service';
-import { CreateChatDto } from '../../chat/dto/create-chat.dto';
+import { ChatService } from 'src/chat/chat.service';
+import { identity } from 'rxjs';
 // import { Chat } from 'src/chat/entities';
 
 // Definición de la interfaz ConnectClient.
@@ -33,87 +33,101 @@ export class MessageWsService {
 		private readonly chatService: ChatService,
 	) { }
 
-	// Función para registrar un cliente.
-	async registerClient( client: Socket, userId: string )
-	{
-		// Buscar el usuario en la base de datos.
-		const user = await this.userRepository.findOneBy({ id: userId });
-		// Si el usuario no se encuentra o no está activo, se lanza un error.
-		if( !user ) throw new Error("User not found");
-		if( !user.isActive ) throw new Error("User is not active");
-
-		// Si el usuario es válido, se agrega a los clientes conectados.
-		this.connectedClients[ client.id ] = {
-			socket: client,
-			user: user
-		};
-	}
-
-	//fucntion para llamar a un cliente
-	getClient(socketId: string)
-	{
-		return this.connectedClients[socketId].user.id;
-	}
-	// Función para eliminar un cliente.
-	removeClient( clientId: string )
-	{
-		// Eliminar al cliente de los clientes conectados.
-		delete this.connectedClients[ clientId ];
-	}
-
-	// Función para obtener el número de clientes conectados.
-	getConnectedClients():number
-	{
-		// Retorna el número de claves en el objeto de clientes conectados.
-		return Object.keys( this.connectedClients ).length;
-	}
-
 	// Función para obtener el nombre completo de un usuario a partir de su socketId.
-	async getUserFullName( socketId: string ) {
+	async getUserFullName( idUser: string ) {
 		try {
+			const user: User = await this.userRepository.findOneBy( {id: idUser});
 			// Si el cliente no existe, lanza un error.
-			if (!this.connectedClients[socketId]) {
+			if (!user) {
 				throw new Error("User not found");
 			}
-			// Si el cliente existe, retorna el nombre completo del usuario.
-			return this.connectedClients[socketId].user.name + ' ' + this.connectedClients[socketId].user.lastName;
+			return user.name + ' ' + user.lastName;
 		} catch (error) {
 			throw new error;
 		}
 	}
 
-	// Método para obtener el usuario asociado a un socket.
-
-	async getUserChanelRegister(client: Socket, params: any) {
+	async getChat(identifier: string)
+	{
 		try {
-			const user: User = this.connectedClients[client.id].user;
-			let result;
-
-			const ChatSend = new CreateChatDto();
-			ChatSend.name = params.room;
-			ChatSend.description = params.topic ?? null;
-
-			if (params.password && params.password.length > 1) {
-			ChatSend.password = params.password;
-			ChatSend.private = true;
-			}
-
-			result = await this.chatService.create(ChatSend, user);
-
-			if (result.chat.chatUser)
-			delete result.chat.chatUser;
-
-			const returnchatDto = this.filterChatFields(result.chat);
-			return { returnchatDto, register: result.register };
-
+			const chat = await this.chatService.findOnePlain(identifier);
+			const filteredChat = this.filterChatFields(chat);
+    		return filteredChat;
 		} catch (error) {
-			throw new BadRequestException('Error al registrar el usuario en el canal: ' + error.message);
+			throw new error;
 		}
 	}
 
+	getIDsforSockets(chatId: string)
+	{
+		const chat = this.getChat(chatId);
+		return chat;
+		return this.filterChatFieldsSocket(chat);
+	}
+	// hace un resumen del chat
 	filterChatFields(chat) {
-		const { user, password, ...chatWithoutUserAndPassword } = chat;
-		const { password: userPassword, roles, images, isActive, email, ...userWithoutSensitiveInfo } = user;
+		if (!chat) {
+			return null;
+		}
+	
+		let chatWithoutUserAndPassword = {...chat};
+		let userWithoutSensitiveInfo = {...chat.user};
+	
+		if (chat.user) {
+			const {password, roles, images, isActive, email, ...rest} = chat.user;
+			userWithoutSensitiveInfo = rest;
+		}
+	
+		if (chat.password || chat.user) {
+			const {password, user, ...rest} = chat;
+			chatWithoutUserAndPassword = rest;
+		}
+	
+		// process chatUser array
+		if (chat.chatUser) {
+			chatWithoutUserAndPassword.chatUser = chat.chatUser.map(chatUser => {
+				if (chatUser.user) {
+					const {password, roles, images, isActive, email, ...rest} = chatUser.user;
+					chatUser.user = rest;
+				}
+				return chatUser;
+			});
+		}
+	
 		return { ...chatWithoutUserAndPassword, user: userWithoutSensitiveInfo };
-	  }
+	}
+	// hace un resumen de filterChatFields para sockets
+	filterChatFieldsSocket(chat) {
+		if (!chat) {
+			return null;
+		}
+	
+		let chatWithoutUserAndPassword = {...chat};
+		let userWithoutSensitiveInfo = {...chat.user};
+	
+		if (chat.user) {
+			const {password, roles, images, isActive, email, ...rest} = chat.user;
+			userWithoutSensitiveInfo = rest;
+		}
+	
+		if (chat.password || chat.user) {
+			const {password, user, ...rest} = chat;
+			chatWithoutUserAndPassword = rest;
+		}
+	
+		// process chatUser array
+		if (chat.chatUser) {
+			chatWithoutUserAndPassword.chatUser = chat.chatUser.map(chatUser => {
+				if (chatUser.user) {
+					const {password, roles, images, isActive, email, ...rest} = chatUser.user;
+					return rest.id;  // Return only the user id
+				}
+				return null;
+			}).filter(Boolean);  // Remove any null values
+		}
+	
+		return { ...chatWithoutUserAndPassword, user: userWithoutSensitiveInfo };
+	}
+	
+	
 }

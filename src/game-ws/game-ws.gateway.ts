@@ -16,29 +16,31 @@ import { MessageWsGateway } from '../message-ws/message-ws.gateway';
 export class GameWsGateway {
 
 
-  private readonly logger = new Logger(MessageWsGateway.name);
+	private readonly logger = new Logger(MessageWsGateway.name);
 	constructor(
 		private readonly gameWsService: GameWsService,
 		private readonly jwtService: JwtService,
 		private readonly authService: AuthService,
 	) {}
 
-  @WebSocketServer()
+	@WebSocketServer()
 	wss: Server;
 
-  afterInit() {
+	afterInit() {
 		this.logger.log("Websocket Gateway initialized");
 	}
 
-  async handleConnection(client: Socket) {
-    this.wss.emit('status', `Conectado` );	
+	async handleConnection(client: Socket) {
+		console.log(client);
+		this.wss.emit('status', `Conectado` );	
 	}
 
-  handleDisconnect(client: Socket) {
+	handleDisconnect(client: Socket) {
+		console.log(client);
 		this.wss.emit('status', `Desconectado` );	
 	}
 
-  @SubscribeMessage('client-game')
+	@SubscribeMessage('client-game')
 	async handleMessage2(client: Socket, payload: CreateMessageWDto) {
 		try {
 			
@@ -49,4 +51,3 @@ export class GameWsGateway {
 	}
 
 }
-
