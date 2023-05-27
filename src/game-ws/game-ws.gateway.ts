@@ -9,7 +9,12 @@ import { MessageWsGateway } from '../message-ws/message-ws.gateway';
 
 
 @WebSocketGateway({
-	cors: true,
+	cors: {
+		origin: '*',
+		//allowedHeaders: 'Access-Control-Allow-Origin, Content-Type',
+		transports: ['websocket', 'polling'],
+		credentials: true,
+	},
 	namespace: 'game-ws',
 })
 
