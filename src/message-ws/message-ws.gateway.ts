@@ -116,19 +116,31 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
 	async handlePrivmsg(client: Socket, params: Params) {
 		try {
+			//optine el id del user mediante el id-socket
 			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
 			//
+			const userOnlineChat = await this.messageWsService.getActiveChatUsers(params.target)
 			if (params.room)
-				this.wss.emit('message-server',{
-					// "id": await this.messageWsService.getUserFullName( idUser ),
-					message: await this.messageWsService.getIDsforSockets(params.room),
-					type: "room"
+			{
+				userOnlineChat.forEach(user => {
+					user.clientIds.forEach(clientId => {
+						this.wss.to(clientId).emit('message-server', {
+							message: params.message,
+							type: "room"
+						});
+					});
 				});
+			}
 			else {
+				// busca el id o id's de usuario a quien tenemos que enviarle los mensajes.
 				const idSocket = this.socketManagerService.getClients(params.target);
-				console.log(idSocket[0]);
+				//optiene los datos del usuario para responder
+				const userDB = await this.messageWsService.getUserFullData( idUser );
 				this.wss.to(idSocket[0]).emit('message-server',{
-					"id": await this.messageWsService.getUserFullName( idUser ),
+					id: userDB.id,
+					name: userDB.name,
+					lastName: userDB.lastName,
+					login: userDB.login,
 					message: params.message,
 					type: "private"
 				});
@@ -136,7 +148,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		} catch (error) {
 			client.emit('error', { response: error.response });
 		}
-		
 	}
 
 	async handleKick(client: Socket, params: any) {

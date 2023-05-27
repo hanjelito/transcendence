@@ -1,13 +1,14 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EntityNotFoundError, Equal, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityNotFoundError, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
 
-import { ExceptionService } from '../services/exception.service';
 import { CreateChatUserDto } from './dto/create-chat-user.dto';
+
 import { User } from '../user/entities/user.entity';
-import { ChatUser } from './entities/chat-user.entity';
 import { Chat } from '../chat/entities';
+import { ChatUser } from './entities/chat-user.entity';
+import { ExceptionService } from '../services/exception.service';
 
 @Injectable()
 export class ChatUserService {
@@ -71,6 +72,42 @@ export class ChatUserService {
 				this.exceptionService.handleDBExceptions(error);
 			}
 		}
+	}
+
+	//plain chatUsers call controller
+	// async findOnePlain( term: string )
+	// {
+	// 	const { ...rest } = await this.findOne( term );
+	// 	return {
+	// 		...rest
+	// 	}
+	// }
+
+	async findOneChatUserByIdentifier(identifier: string)
+	{
+		
+		if (isUUID(identifier)) {
+
+
+			
+			const chatUsers = await this.chatUsersRepository
+			.createQueryBuilder('chatUser')
+			.select('chatUser.chat.id', 'chatId') 
+			.addSelect('chatUser.user.id', 'userId') 
+			.innerJoin('chatUser.chat', 'chat')
+			.innerJoin('chatUser.user', 'user')
+			.where('chat.id = :chatId', { chatId: identifier })
+			.getRawMany();
+			
+			if (!chatUsers) {
+				throw new NotFoundException(`Chat with id	${ identifier } not found`);
+			}
+			const chatUsersArray = Object.values(chatUsers);
+			return {
+				...chatUsersArray
+			};
+		}
+		return null;
 	}
 
 }

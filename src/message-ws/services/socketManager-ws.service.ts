@@ -41,4 +41,15 @@ export class SocketManagerService {
     }
     return null;
   }
+
+  getAllClients() {
+    let allClientsArray = [];
+    for (const [userId, clientIds] of this.clients.entries()) {
+      allClientsArray.push({
+        userId: userId,
+        clientIds: clientIds
+      });
+    }
+    return allClientsArray;
+  }
 }

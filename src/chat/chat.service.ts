@@ -1,17 +1,18 @@
 import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { validate as isUUID } from 'uuid';
 
+import { CreateChatDto } from './dto/create-chat.dto';
+import { UpdateChatDto } from './dto/update-chat.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { CreateChatUserDto } from '../chat-user/dto/create-chat-user.dto';
+import { ChatUserService } from '../chat-user/chat-user.service';
+
 import { Chat } from './entities';
 import { User } from '../user/entities/user.entity';
 import { ChatUser } from '../chat-user/entities/chat-user.entity';
 import { CustomHttpException } from './exceptions/custom-http-exception';
-import { ChatUserService } from '../chat-user/chat-user.service';
-import { CreateChatUserDto } from '../chat-user/dto/create-chat-user.dto';
 
 
 
@@ -51,6 +52,15 @@ export class ChatService {
 	}))
 	}
 
+	//plain chatUsers call controller
+	async findOnePlain( term: string )
+	{
+		const { ...rest } = await this.findOne( term );
+		return {
+			...rest
+		}
+	}
+
 	async findOne(identifier: string)
 	{
 		let chat: Chat;
@@ -77,15 +87,6 @@ export class ChatService {
 		return chat;
 	}
 
-	//plain chatUsers call controller
-	async findOnePlain( term: string )
-	{
-		const { ...rest } = await this.findOne( term );
-		return {
-			...rest
-		}
-	}
-	
 	async create(createChatDto: CreateChatDto, user: User) {
 		try {
 			const { ...chatDetails } = createChatDto;

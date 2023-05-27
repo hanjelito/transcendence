@@ -7,7 +7,8 @@ import { Repository } from 'typeorm';
 // Importación de la entidad User.
 import { User } from '../../user/entities/user.entity';
 import { ChatService } from 'src/chat/chat.service';
-import { identity } from 'rxjs';
+import { ChatUserService } from 'src/chat-user/chat-user.service';
+import { SocketManagerService } from './socketManager-ws.service';
 // import { Chat } from 'src/chat/entities';
 
 // Definición de la interfaz ConnectClient.
@@ -31,103 +32,70 @@ export class MessageWsService {
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
 		private readonly chatService: ChatService,
+		private readonly chatUserService: ChatUserService,
+		//
+		private readonly socketManagerService: SocketManagerService,
 	) { }
 
-	// Función para obtener el nombre completo de un usuario a partir de su socketId.
-	async getUserFullName( idUser: string ) {
+	async getUserFullData( idUser: string ) {
 		try {
 			const user: User = await this.userRepository.findOneBy( {id: idUser});
 			// Si el cliente no existe, lanza un error.
 			if (!user) {
 				throw new Error("User not found");
 			}
-			return user.name + ' ' + user.lastName;
+
+			return {
+				id: user.id,
+				name: user.name,
+				lastName:user.lastName,
+				login:user.login,
+			};
 		} catch (error) {
 			throw new error;
 		}
+	}
+
+	//TODO 	terminar el return de todos los usuarios de chat que estan conectados en ese canal
+	async getChatWhithId(chatId: string)
+	{
+		const chat = await this.getChat(chatId);
+		return chat;
 	}
 
 	async getChat(identifier: string)
 	{
 		try {
-			const chat = await this.chatService.findOnePlain(identifier);
-			const filteredChat = this.filterChatFields(chat);
-    		return filteredChat;
+			const chaUser = await this.chatUserService.findOneChatUserByIdentifier(identifier);
+    		return chaUser;
 		} catch (error) {
 			throw new error;
 		}
 	}
+	// TODO arreglar esto no funciona no filtra
+	async getActiveChatUsers(params) {
+		// Obtén todos los usuarios del chat basado en los parámetros.
+		const chatUsers = await this.getChatWhithId(params);
 
-	getIDsforSockets(chatId: string)
-	{
-		const chat = this.getChat(chatId);
-		return chat;
-		return this.filterChatFieldsSocket(chat);
+		// Conviértelo a un array para facilitar el manejo.
+		const chatUsersArray = Object.values(chatUsers);
+
+		// Obtén todos los clientes actualmente conectados.
+		const allClients = this.socketManagerService.getAllClients();
+
+		// Filtra los clientes para solo aquellos cuyo userId está en chatUsersArray.
+		const filteredClients = allClients.filter(client =>
+			chatUsersArray.some(chatUser => chatUser.userId === client.userId)
+		);
+
+		// Mapear los clientes filtrados en un formato que muestre solo el userId y los clientIds
+		const result = filteredClients.map(client => {
+			return {
+			userId: client.userId,
+			clientIds: client.clientIds
+			};
+		});
+
+		return result;
 	}
-	// hace un resumen del chat
-	filterChatFields(chat) {
-		if (!chat) {
-			return null;
-		}
-	
-		let chatWithoutUserAndPassword = {...chat};
-		let userWithoutSensitiveInfo = {...chat.user};
-	
-		if (chat.user) {
-			const {password, roles, images, isActive, email, ...rest} = chat.user;
-			userWithoutSensitiveInfo = rest;
-		}
-	
-		if (chat.password || chat.user) {
-			const {password, user, ...rest} = chat;
-			chatWithoutUserAndPassword = rest;
-		}
-	
-		// process chatUser array
-		if (chat.chatUser) {
-			chatWithoutUserAndPassword.chatUser = chat.chatUser.map(chatUser => {
-				if (chatUser.user) {
-					const {password, roles, images, isActive, email, ...rest} = chatUser.user;
-					chatUser.user = rest;
-				}
-				return chatUser;
-			});
-		}
-	
-		return { ...chatWithoutUserAndPassword, user: userWithoutSensitiveInfo };
-	}
-	// hace un resumen de filterChatFields para sockets
-	filterChatFieldsSocket(chat) {
-		if (!chat) {
-			return null;
-		}
-	
-		let chatWithoutUserAndPassword = {...chat};
-		let userWithoutSensitiveInfo = {...chat.user};
-	
-		if (chat.user) {
-			const {password, roles, images, isActive, email, ...rest} = chat.user;
-			userWithoutSensitiveInfo = rest;
-		}
-	
-		if (chat.password || chat.user) {
-			const {password, user, ...rest} = chat;
-			chatWithoutUserAndPassword = rest;
-		}
-	
-		// process chatUser array
-		if (chat.chatUser) {
-			chatWithoutUserAndPassword.chatUser = chat.chatUser.map(chatUser => {
-				if (chatUser.user) {
-					const {password, roles, images, isActive, email, ...rest} = chatUser.user;
-					return rest.id;  // Return only the user id
-				}
-				return null;
-			}).filter(Boolean);  // Remove any null values
-		}
-	
-		return { ...chatWithoutUserAndPassword, user: userWithoutSensitiveInfo };
-	}
-	
-	
 }

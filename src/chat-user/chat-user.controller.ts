@@ -32,9 +32,15 @@ export class ChatUserController {
   //   return this.chatUserService.findAll();
   // }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.chatUserService.findOne(+id);
+  @Get('find-to-idchat/:identifier')
+  findOne(@Param('identifier') identifier: string) {
+    return this.chatUserService.findOneChatUserByIdentifier(identifier);
+    // return 1;
+  }
+
+  // @Get(':identifier')
+  //   findOneByIdentifier(@Param('identifier') identifier: string) {
+  //   return this.chatUserService.findOneChatUserByIdentifier(identifier);
   // }
 
   // @Patch(':id')
