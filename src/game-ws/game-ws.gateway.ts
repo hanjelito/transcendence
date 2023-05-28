@@ -20,7 +20,6 @@ import { MessageWsGateway } from '../message-ws/message-ws.gateway';
 
 export class GameWsGateway {
 
-
 	private readonly logger = new Logger(MessageWsGateway.name);
 	constructor(
 		private readonly gameWsService: GameWsService,
@@ -36,19 +35,19 @@ export class GameWsGateway {
 	}
 
 	async handleConnection(client: Socket) {
-		console.log(client);
+		// console.log(client);
 		this.wss.emit('status', `Conectado` );	
 	}
 
 	handleDisconnect(client: Socket) {
-		console.log(client);
+		// console.log(client);
 		this.wss.emit('status', `Desconectado` );	
 	}
 
 	@SubscribeMessage('client-game')
 	async handleMessage2(client: Socket, payload: CreateMessageWDto) {
 		try {
-			
+			this.wss.emit('server-game', `hiciste click` );	
 
 		} catch (error) {
 			console.error("Error al parsear el payload:", error);
