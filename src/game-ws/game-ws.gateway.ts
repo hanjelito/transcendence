@@ -53,5 +53,4 @@ export class GameWsGateway {
 			console.error("Error al parsear el payload:", error);
 		}
 	}
-
 }

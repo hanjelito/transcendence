@@ -43,7 +43,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	async handleConnection(client: Socket) {
 
 		// Extraer el token JWT del encabezado del mensaje de conexión.
-		const token = client.handshake.headers.bearer_token as string;
+		const token = client.handshake.headers.authorization;
 		let payload: JwtPayload;
 		
 		// Intenta verificar el token y registra al cliente en el servicio de mensajes.
@@ -133,16 +133,18 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			}
 			else {
 				// busca el id o id's de usuario a quien tenemos que enviarle los mensajes.
-				const idSocket = this.socketManagerService.getClients(params.target);
+				const idSockets = this.socketManagerService.getClients(params.target);
 				//optiene los datos del usuario para responder
 				const userDB = await this.messageWsService.getUserFullData( idUser );
-				this.wss.to(idSocket[0]).emit('message-server',{
-					id: userDB.id,
-					name: userDB.name,
-					lastName: userDB.lastName,
-					login: userDB.login,
-					message: params.message,
-					type: "private"
+				idSockets.forEach(idSocket => {
+					this.wss.to(idSocket).emit('message-server',{
+						id: userDB.id,
+						name: userDB.name,
+						lastName: userDB.lastName,
+						login: userDB.login,
+						message: params.message,
+						type: "private"
+					});
 				});
 			}
 		} catch (error) {
