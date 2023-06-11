@@ -43,9 +43,11 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	async handleConnection(client: Socket) {
 
 		// Extraer el token JWT del encabezado del mensaje de conexión.
-		const token = client.handshake.headers.authorization;
+        const token = client.handshake.headers.authorization;
+  		// const token = authHeader && authHeader.split(' ')[1];
+
 		let payload: JwtPayload;
-		
+		console.log(token);
 		// Intenta verificar el token y registra al cliente en el servicio de mensajes.
 		try{
 			payload = this.jwtService.verify(token);
@@ -58,7 +60,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			client.disconnect(true);
 			return;
 		}
-	} 
+	}
 		
 	// Método que se ejecuta cuando un cliente se desconecta.
 	handleDisconnect(client: Socket) {
