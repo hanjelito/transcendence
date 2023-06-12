@@ -110,4 +110,29 @@ export class ChatUserService {
 		return null;
 	}
 
+	async findAllChatsByUserId(identifier: string)
+	{
+		if (isUUID(identifier)) {
+			const chatUsers = await this.chatUsersRepository
+			.createQueryBuilder('chatUser')
+			.select('chat.id', 'chatId') // Adjusted this line
+			.addSelect('chat.name', 'chatName')  // Adjusted this line
+			.addSelect('user.id', 'userId') // Adjusted this line
+			.innerJoin('chatUser.chat', 'chat')
+			.innerJoin('chatUser.user', 'user')
+			.where('user.id = :userId', { userId: identifier })
+			.getRawMany();
+			
+			if (!chatUsers || chatUsers.length === 0) {
+				throw new NotFoundException(`User with id ${ identifier } is not found in any chat`);
+			}
+			const chatUsersArray = Object.values(chatUsers);
+			return {
+				...chatUsersArray
+			};
+		}
+		return null;
+	}
+
+
 }
