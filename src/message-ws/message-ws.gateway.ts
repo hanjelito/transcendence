@@ -44,7 +44,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
 		// Extraer el token JWT del encabezado del mensaje de conexión.
         const token = client.handshake.headers.authorization;
-		console.log('test');
   		// const token = authHeader && authHeader.split(' ')[1];
 
 		let payload: JwtPayload;

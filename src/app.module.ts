@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatModule } from './chat/chat.module';
@@ -8,6 +8,8 @@ import { ChatUserModule } from './chat-user/chat-user.module';
 import { MessageWsModule } from './message-ws/message-ws.module';
 import { GameWsModule } from './game-ws/game-ws.module';
 import { UserModule } from './user/user.module';
+import { ContactModule } from './contact/contact.module';
+import { ApiTokenCheckMiddleware } from './common/middleware/api-token-check-middleware';
 
 // La clase AppModule es el módulo principal de la aplicación
 // y se encarga de importar todos los módulos necesarios.
@@ -33,12 +35,18 @@ import { UserModule } from './user/user.module';
     MessageWsModule,
     GameWsModule,
     UserModule,
+    ContactModule,
   ],
 
-  // No hay controladores a nivel de AppModule.
   controllers: [],
 
   // No hay proveedores a nivel de AppModule.
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(ApiTokenCheckMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL })
+  }
+}

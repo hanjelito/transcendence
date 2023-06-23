@@ -6,10 +6,13 @@ import { AppModule } from './app.module';
 import { CustomExceptionFilter } from './filters/custom-exception.filter';
 import { TokenErrorFilter } from './filters/token-error';
 
+
+
 // Función bootstrap que inicia la aplicación NestJS.
 async function bootstrap() {
   // Crea una instancia de la aplicación utilizando el módulo principal (AppModule).
   const app = await NestFactory.create(AppModule);
+  //
   // Agrega un filtro global para manejar las excepciones.
   // app.useGlobalFilters(new CustomExceptionFilter());
   app.useGlobalFilters(new CustomExceptionFilter(), new TokenErrorFilter());
@@ -48,7 +51,9 @@ async function bootstrap() {
 
 
   // Inicia la aplicación en el puerto 3000.
-  app.enableCors();
+  app.enableCors({
+    origin: '*',
+  });
   
   await app.listen(3000);
 }
