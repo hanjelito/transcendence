@@ -45,9 +45,9 @@ export class GameWsGateway {
 	}
 
 	@SubscribeMessage('client-game')
-	async handleMessage2(client: Socket, payload: CreateMessageWDto) {
+	async handleMessage(client: Socket, payload: any) {
 		try {
-			this.wss.emit('server-game', `hiciste click` );	
+			this.wss.emit('server-game', payload );	
 
 		} catch (error) {
 			console.error("Error al parsear el payload:", error);
