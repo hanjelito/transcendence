@@ -1,14 +1,14 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { CommonModule } from './common/common.module';
-import { AuthModule } from './auth/auth.module';
 import { ChatUserModule } from './chat-user/chat-user.module';
-import { MessageWsModule } from './message-ws/message-ws.module';
-import { GameWsModule } from './game-ws/game-ws.module';
 import { UserModule } from './user/user.module';
 import { ContactModule } from './contact/contact.module';
+import { MessageWsModule } from './message-ws/message-ws.module';
+import { GameWsModule } from './game-ws/game-ws.module';
 import { ApiTokenCheckMiddleware } from './common/middleware/api-token-check-middleware';
 
 // La clase AppModule es el módulo principal de la aplicación
@@ -30,11 +30,12 @@ import { ApiTokenCheckMiddleware } from './common/middleware/api-token-check-mid
     // Importa los módulos específicos de la aplicación.
     CommonModule,
     AuthModule,
+    ContactModule,
     ChatModule,
     ChatUserModule,
+    UserModule,
     MessageWsModule,
     GameWsModule,
-    UserModule,
     ContactModule,
   ],
 

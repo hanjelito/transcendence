@@ -1,12 +1,15 @@
 import {
 	BeforeInsert, BeforeUpdate,
 	Column, Entity,
+	JoinColumn,
+	ManyToOne,
 	OneToMany, PrimaryGeneratedColumn
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 
 import { Chat } from "../../chat/entities";
 import { ChatUser } from "../../chat-user/entities/chat-user.entity";
+import { Contact } from "../../contact/entities/contact.entity";
 
 
 // @Entity() define la clase como una entidad de TypeORM.
@@ -130,8 +133,13 @@ export class User {
 		() => ChatUser,
 		( chatUsers ) => chatUsers.user,
 	)
-	// Relación uno a muchos entre el usuario y el chat.
 	chatUser: ChatUser
+
+
+	@OneToMany(() => Contact, contact => contact.user, {
+		cascade: true,
+	})
+  	contacts: Contact[];
 
 	// Método que se ejecuta antes de insertar un nuevo registro de usuario en la base de datos.
 	// Convierte el email a minúsculas.
@@ -149,15 +157,3 @@ export class User {
 		this.checkFieldsBeforeInsert();
 	}
 }
-
-/**
-Este archivo define la clase User, que se utiliza para definir el modelo de datos
-de un usuario. La clase contiene las propiedades id, email, password, name, lastName,
-isActive, roles y chat, que se corresponden con los campos de la tabla users de la
-base de datos. La propiedad id es la clave primaria de la tabla, y las propiedades
-email y password son obligatorias. La propiedad email debe ser única, y la propiedad
-password no se devuelve en las respuestas de la API. La propiedad isActive es un
-booleano que indica si el usuario está activo o no. La propiedad roles es un array
-de cadenas de caracteres que contiene los roles del usuario. La propiedad chat es
-un array de objetos de la clase Chat, que contiene los chats del usuario.
- */
