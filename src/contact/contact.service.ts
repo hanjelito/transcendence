@@ -83,8 +83,6 @@ export class ContactService {
         if (!contacts) 
           return [];
         
-        // Devolver los contactos
-        // return contacts;
         return contacts.map(contact => ({
           id: contact.contact.id,
           login: contact.contact.login,
