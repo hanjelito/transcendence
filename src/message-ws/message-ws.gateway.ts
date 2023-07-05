@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateMessageWDto, Params } from './dto/create-message-w.dto';
 import { JwtPayload } from '../auth/interfaces';
 import { ChatMessageWsService, MessageWsService, SocketManagerService } from './services';
+import { SocketEventsService } from 'src/services/socket-events.service';
 
 // Decorador para crear un gateway WebSocket con el namespace 'message-ws'.
 // ws://localhost:3000/message-ws
@@ -26,6 +27,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		private readonly jwtService: JwtService,
 		private readonly socketManagerService: SocketManagerService,
 		// private readonly authService: AuthService,
+		private readonly socketEventsService: SocketEventsService,
 	) {}
 
 	// Una referencia al servidor WebSocket.
@@ -60,7 +62,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			client.disconnect(true);
 			return;
 		}
-		console.log('conectoooo');
 	}
 		
 	// Método que se ejecuta cuando un cliente se desconecta.
@@ -119,43 +120,51 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
 	async handlePrivmsg(client: Socket, params: Params) {
 		try {
-			//optine el id del user mediante el id-socket
 			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
-			//
 			const userOnlineChat = await this.messageWsService.getActiveChatUsers(params.target)
-			if (params.room)
-			{
+	
+			if (params.room) {
 				userOnlineChat.forEach(user => {
 					user.clientIds.forEach(clientId => {
-						this.wss.to(clientId).emit('message-server', {
+						const messageData = {
 							message: params.message,
 							user: params.user,
 							id: idUser,
 							type: "room"
-						});
+						};
+						const sendValue = idUser != this.socketManagerService.getUserIdBySocketId(clientId) ? true: false;
+						this.emitMessageAndNotification(client, sendValue, clientId, 'message-server', messageData);
 					});
 				});
 			}
 			else {
-				// busca el id o id's de usuario a quien tenemos que enviarle los mensajes.
 				const idSockets = this.socketManagerService.getClients(params.target);
-				//optiene los datos del usuario para responder
-				const userDB = await this.messageWsService.getUserFullData( idUser );
+				const userDB = await this.messageWsService.getUserFullData(idUser);
 				idSockets.forEach(idSocket => {
-					this.wss.to(idSocket).emit('message-server',{
+					const messageData = {
 						id: userDB.id,
 						name: userDB.name,
 						lastName: userDB.lastName,
 						login: userDB.login,
 						message: params.message,
 						type: "private"
-					});
+					};
+					//TODO falta para enviar mensajes a chat privados
+					const sendValue = idUser != this.socketManagerService.getUserIdBySocketId(client.id) ? true: false;
+					this.emitMessageAndNotification(client, sendValue, idSocket, 'message-server', messageData);
 				});
 			}
 		} catch (error) {
 			client.emit('error', { response: error.response });
 		}
 	}
+
+	private emitMessageAndNotification(client: Socket, sendValue: boolean, clientId: string, messageType: string, messageData: any) {
+		this.wss.to(clientId).emit(messageType, messageData);
+		if (sendValue)
+			this.socketEventsService.emitNotificationPrivate(client, clientId,  { type: 'chat-message', data: messageData});
+	}
+	// notificaciones
 
 	async handleKick(client: Socket, params: any) {
 		// Aquí se añadiría el código para manejar este caso.

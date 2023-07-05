@@ -9,9 +9,17 @@ import { ChatUserModule } from 'src/chat-user/chat-user.module';
 
 import { AuthService } from 'src/auth/auth.service';
 import { ChatMessageWsService, SocketManagerService } from './services';
+import { SocketEventsService } from 'src/services/socket-events.service';
 
 @Module({
-  providers: [MessageWsGateway, MessageWsService, AuthService, SocketManagerService, ChatMessageWsService],
+  providers: [
+    MessageWsGateway,
+    MessageWsService,
+    AuthService,
+    SocketManagerService,
+    ChatMessageWsService,
+    SocketEventsService
+  ],
   imports: [ AuthModule, ChatModule, ChatUserModule, UserModule ],
 })
 
