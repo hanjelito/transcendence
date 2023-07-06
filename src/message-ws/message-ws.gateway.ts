@@ -127,12 +127,13 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 				userOnlineChat.forEach(user => {
 					user.clientIds.forEach(clientId => {
 						const messageData = {
-							message: params.message,
-							user: params.user,
 							id: idUser,
+							user: params.user,
+							message: params.message,
 							type: "room"
 						};
 						const sendValue = idUser != this.socketManagerService.getUserIdBySocketId(clientId) ? true: false;
+						this.wss.to(clientId).emit('message-server', messageData);
 						this.emitMessageAndNotification(client, sendValue, clientId, 'message-server', messageData);
 					});
 				});
@@ -140,17 +141,21 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			else {
 				const idSockets = this.socketManagerService.getClients(params.target);
 				const userDB = await this.messageWsService.getUserFullData(idUser);
+				console.log(idUser);
 				idSockets.forEach(idSocket => {
 					const messageData = {
 						id: userDB.id,
-						name: userDB.name,
-						lastName: userDB.lastName,
-						login: userDB.login,
+						user: userDB.login,
+						// name: userDB.name,
+						// lastName: userDB.lastName,
+						// login: userDB.login,
 						message: params.message,
 						type: "private"
 					};
 					//TODO falta para enviar mensajes a chat privados
 					const sendValue = idUser != this.socketManagerService.getUserIdBySocketId(client.id) ? true: false;
+					this.wss.to(idSockets).emit('message-server', messageData);
+					this.wss.to(client.id).emit('message-server', messageData);
 					this.emitMessageAndNotification(client, sendValue, idSocket, 'message-server', messageData);
 				});
 			}
@@ -160,7 +165,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	}
 
 	private emitMessageAndNotification(client: Socket, sendValue: boolean, clientId: string, messageType: string, messageData: any) {
-		this.wss.to(clientId).emit(messageType, messageData);
 		if (sendValue)
 			this.socketEventsService.emitNotificationPrivate(client, clientId,  { type: 'chat-message', data: messageData});
 	}

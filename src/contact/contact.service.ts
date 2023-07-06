@@ -26,33 +26,36 @@ export class ContactService {
     if (!isUUID(createContactDto.contactId))
       throw new NotFoundException(`Contact with id ${createContactDto.contactId} not founds`);
 
-			contact = await this.userRepository.findOneBy( { id: createContactDto.contactId } );
-      if (!contact)
-        throw new NotFoundException(`Contact with id ${createContactDto.contactId} not found`);
+		contact = await this.userRepository.findOneBy( { id: createContactDto.contactId } );
+    if (!contact)
+      throw new NotFoundException(`Contact with id ${createContactDto.contactId} not found`);
       
-        
-        const existingChatUser = await this.contactRepository.findOne({
-          where: {
-            user: { id: user.id },
-            contact: { id: contact.id },
-          },
-        });
-        if (existingChatUser)
-          throw new NotFoundException(`Contact whith id ${createContactDto.contactId} exist no add`);
+    if (createContactDto.contactId == user.id)
+      throw new NotFoundException(`You cannot add yourself`);
+    
 
-        const newContact = this.contactRepository.create({
-          user: user,
-          contact: contact,
-        });
-        
-        await this.contactRepository.save(newContact);
+      const existingChatUser = await this.contactRepository.findOne({
+        where: {
+          user: { id: user.id },
+          contact: { id: contact.id },
+        },
+      });
+      if (existingChatUser)
+        throw new NotFoundException(`Contact whith id ${createContactDto.contactId} exist no add`);
 
-        const { password,email,isActive,roles, ...resContact } = contact;
-        return {
-          message: "new contact",
-          status: true,
-          contact: resContact
-        };
+      const newContact = this.contactRepository.create({
+        user: user,
+        contact: contact,
+      });
+        
+      await this.contactRepository.save(newContact);
+
+      const { password,email,isActive,roles, ...resContact } = contact;
+      return {
+        message: "new contact",
+        status: true,
+        contact: resContact
+      };
     } catch (error) {
       // si el error es de tipo EntityNotFoundError, lanzar un error 404
 			if (error instanceof EntityNotFoundError) {
