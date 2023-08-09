@@ -10,6 +10,7 @@ import { ContactModule } from './contact/contact.module';
 import { MessageWsModule } from './message-ws/message-ws.module';
 import { GameWsModule } from './game-ws/game-ws.module';
 import { ApiTokenCheckMiddleware } from './common/middleware/api-token-check-middleware';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // La clase AppModule es el módulo principal de la aplicación
 // y se encarga de importar todos los módulos necesarios.
@@ -26,6 +27,9 @@ import { ApiTokenCheckMiddleware } from './common/middleware/api-token-check-mid
       autoLoadEntities: true,
       synchronize: true,
     }),
+
+    // initializes the scheduler and registers any declarative cron jobs, timeouts and intervals 
+    ScheduleModule.forRoot(),
 
     // Importa los módulos específicos de la aplicación.
     CommonModule,
