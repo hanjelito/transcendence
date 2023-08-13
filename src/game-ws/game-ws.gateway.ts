@@ -36,20 +36,189 @@ export class GameWsGateway {
 	}
 
 	async handleConnection(client: Socket) {
-		// console.log(client);
-		this.wss.emit('status', `Conectado` );	
+		//console.log(client);
+		this.wss.emit('status', `Conectado` );
 	}
 
 	handleDisconnect(client: Socket) {
-		// console.log(client);
+		//console.log(client.id);
 		this.wss.emit('status', `Desconectado` );	
 	}
 
 	@SubscribeMessage('client-game')
 	async handleMessage(client: Socket, payload: any) {
 		try {
-			this.wss.emit('server-game', payload );	
-
+			// join waiting room
+			if (payload.command === 'REQUEST_INFO'){
+				console.log("test init")
+				// Send waiting room when connected
+				this.wss.emit('server-game', {
+					command: 'WAITING_ROOM',
+					data: GlobalServiceGames.waiting_room,
+					timestamp:  Date.now() 
+				} );
+				// Send game list when connected
+				this.wss.emit('server-game', {
+					command: 'GAME_LIST',
+					data: GlobalServiceGames.games,
+					timestamp:  Date.now() 
+					} );	
+				this.wss.emit('server-game', {
+					command: 'MSG',
+					params: { //player_id_1:payload.params.player_id_1,
+							player_id_1:'*',
+							player_id_2:'*', //payload.params.player_id_2,
+							msg: "Prueba de conexion inicial: "
+							}, 
+					timestamp:  Date.now()
+					} );	
+			}
+			// Player status
+			if (payload.command === 'UPDATE_PLAYER_STAT'){
+				console.log(payload.params)
+				for (let game of GlobalServiceGames.games){
+					if (game.game_id === payload.params.game_id){
+							if (payload.params.player_id === game.p1id) {
+								game.p1_state = payload.params.player_status;
+								if (game.p1_state & game.p2_state){
+									game.game_status = 1
+									game.game_count= 5;
+								}
+								break
+							}
+							if (payload.params.player_id === game.p2id) {
+								game.p2_state = payload.params.player_status;
+								if (game.p1_state & game.p2_state){
+									game.game_status = 1
+									game.game_count= 5;
+								}
+								break
+							}	
+					}
+				}
+			}
+			// Update player position
+			if (payload.command === 'UPDATE_PLAYER_MOV'){
+					//console.log(payload.params)
+					for (let game of GlobalServiceGames.games){
+						if (game.game_id === payload.params.game_id){
+								if (payload.params.player_id === game.p1id) {
+									game.p1y = payload.params.player_pos;
+									game.p1time = payload.timestamp
+									break
+								}
+								if (payload.params.player_id === game.p2id) {
+									game.p2y = payload.params.player_pos;
+									game.p2time = payload.timestamp
+									break
+								}	
+						}
+					}
+			}
+			// join waiting room
+			if (payload.command === 'JOIN_WAITING_ROOM'){
+				//Check if you are in a game --> notify
+				GlobalServiceGames.waiting_room = payload.params
+				this.wss.emit('server-game', {
+					command: 'WAITING_ROOM',
+					data: GlobalServiceGames.waiting_room,
+					timestamp:  Date.now() 
+				} );
+			}
+			// join waiting room
+			if (payload.command === 'LEAVE_WAITING_ROOM'){
+				//Check if you are in a game --> notify
+				GlobalServiceGames.waiting_room = null
+				this.wss.emit('server-game', {
+					command: 'WAITING_ROOM',
+					data: GlobalServiceGames.waiting_room,
+					timestamp:  Date.now() 
+				} );
+			}
+			// created game from waiting room
+			if (payload.command === 'CREATED_WAITING_ROOM'){
+				console.log("Want to created",payload.params)
+				//Check if you are in a game --> notify --> delete waiting room?
+				// created new game ---> notify to users
+				let flag = 0
+				for (let game of GlobalServiceGames.games){
+					if ((game.p1id === payload.params.player_id_1) || (game.p2id === payload.params.player_id_1)){
+						flag = 1
+						break
+					}
+					if ((game.p1id === payload.params.player_id_2) || (game.p2id === payload.params.player_id_2)){
+						flag = 2
+						break
+					}
+				}
+				if (flag === 0){
+					let ang = Math.random()*(2) + -1
+					GlobalServiceGames.games.push( {
+						game_id: GlobalServiceGames.games.length + 1,
+						game_status:0,
+						game_count: 120,
+						game_type: payload.params.game_level, 
+						game_vel: 10,
+						ballpos:[500,250],
+						ballvel:[Math.cos(ang),Math.sin(ang)],
+						ballrad: 5,
+						p1id: payload.params.player_id_1,
+						p1nick: payload.params.player_nick_1,
+						p1y:250,
+						p1time : Date.now(),
+						p1ptos:0,
+						p1_state: false,
+						p2id: payload.params.player_id_2,
+						p2nick: payload.params.player_nick_2,
+						p2y:250,
+						p2time :Date.now(), 
+						p2ptos:0,
+						p2_state: false, 
+						pad:[5,100]
+						}
+					)
+					GlobalServiceGames.waiting_room = null
+					// sent message new game start
+					this.wss.emit('server-game', {
+						command: 'MSG',
+						params: { //player_id_1:payload.params.player_id_1,
+									player_id_1:'*',
+								  player_id_2:payload.params.player_id_2,
+								  msg: "Game creado: " + payload.params.player_nick_1 + " vs " + payload.params.player_nick_2
+								}, 
+						timestamp:  Date.now()
+						 } );
+				}
+				if (flag === 1){
+					// sent notify payload.params.player_id_1 esta un game
+					this.wss.emit('server-game', {
+						command: 'MSG',
+						params: { player_id_1:payload.params.player_id_1,
+								  player_id_2:payload.params.player_id_2,
+								  msg: "imposible crear juego "+payload.params.player_nick_1 + " está jugando"
+								}, 
+						timestamp:  Date.now()
+						 } );
+					GlobalServiceGames.waiting_room = null
+				}
+				if (flag === 2){
+					// sent notify payload.params.player_id_2 esta un game
+					this.wss.emit('server-game', {
+						command: 'MSG',
+						params: { player_id_1:payload.params.player_id_1,
+								  player_id_2:payload.params.player_id_2,
+								  msg: "imposible crear juego "+payload.params.player_nick_2 + " está jugando"
+								}, 
+						timestamp:  Date.now()
+						 } );
+					GlobalServiceGames.waiting_room = null
+				}
+				this.wss.emit('server-game', {
+					command: 'WAITING_ROOM',
+					data: GlobalServiceGames.waiting_room,
+					timestamp:  Date.now() 
+				} );
+			}	
 		} catch (error) {
 			console.error("Error al parsear el payload:", error);
 		}
@@ -58,23 +227,197 @@ export class GameWsGateway {
 	//Counter down to handle times out
     @Interval(1000)
     handleCountdownInterval() {
-      console.log(GlobalServiceGames.games[0]);
-      this.logger.log("descontando");
-      GlobalServiceGames.games[0]=GlobalServiceGames.games[0]+1;
+		for (let game of GlobalServiceGames.games){
+			game.game_count = game.game_count - 1
+				// Handle time out enter the game no viene nadie
+				if (game.game_status === 0 && game.game_count <= 0){
+					//destroy game 
+					let tmp_array=[]
+					let i = 0
+					for (let gam of GlobalServiceGames.games){
+						if (gam.game_id != game.game_id){
+							tmp_array[i]=gam
+							i++;
+						} 
+					} 
+					GlobalServiceGames.games = tmp_array
+					this.wss.emit('server-game', {
+						command: 'GAME_LIST',
+						data: GlobalServiceGames.games,
+						timestamp:  Date.now() 
+						 } );
+					//send  notificación  
+					this.wss.emit('server-game', {
+						command: 'MSG',
+						params: { player_id_1:game.p1id,
+									player_id_2:game.p2id,
+								  msg: "game destroy por incomparecencia"
+								}, 
+						timestamp:  Date.now()
+						 } );
+
+				}
+				if (game.game_status === 1  && game.game_count <= 0){
+					game.game_status = 2
+					game.game_count = 30 // Si tiempo limite de partida
+				}
+				if (game.game_status === 2  && game.game_count <= 0){  
+					game.game_status = 3
+					game.game_count = 4 //  tiempo vista resultados
+				}
+				if (game.game_status === 3  && game.game_count <= 0){  
+					game.game_status = 4
+					game.game_count = 0 // 
+					//save results in data base before destroy
+
+				}
+				if (game.game_status === 4  && game.game_count <= 0){  
+					let tmp_array=[]
+					let i = 0
+					for (let gam of GlobalServiceGames.games){
+						if (gam.game_status != 4){
+							tmp_array[i]=gam
+							i++;
+						} 
+					} 
+					GlobalServiceGames.games = tmp_array
+					this.wss.emit('server-game', {
+						command: 'GAME_LIST',
+						data: GlobalServiceGames.games,
+						timestamp:  Date.now() 
+						 } );
+				}
+		}
 	}
 
 	//Updating the games
-    @Interval(500)
+    @Interval(60)
     handleUpdateInterval() {
-      console.log(GlobalServiceGames.games[0]);
-      this.logger.log("Updating games");
-      GlobalServiceGames.games[0]=GlobalServiceGames.games[0]+1;
+	  for (let game of GlobalServiceGames.games){
+		if (game.game_status === 2) {  // play time
+			// Calculo parametros trayectoria ball y = m * x + d
+			let m = (game.ballvel[1]*game.game_vel) / (game.ballvel[0]*game.game_vel)
+			let d = game.ballpos[1] - m * game.ballpos[0]
+			let hit = false
+			// Pad player 2
+			let xc = 990
+			let yc = m * xc + d
+			if ( ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) // player 2
+				 && ( (yc >= (game.p2y - game.pad[1]/2)) && (yc <= (game.p2y + game.pad[1]/2)) )
+				){
+					game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+					let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - 990))
+					game.ballpos[0] = xc > game.ballpos[0] ? xc - delta: xc + delta
+					game.ballvel[0] = game.ballvel[0] * -1
+					//game.ballpos[0] = game.ballpos[0] + game.ballvel[0]*game.game_vel
+					hit = true
+				}
+			// Pad Player 1
+			xc = 10
+			yc = m * xc + d
+			if ( ((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) // player 1
+				&& ( (yc >= (game.p1y - game.pad[1]/2)) && (yc <= (game.p1y + game.pad[1]/2)) )
+				){
+					game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+					let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - 10))
+					game.ballpos[0] = xc > game.ballpos[0] ? xc - delta: xc + delta
+					game.ballvel[0] = game.ballvel[0] * -1
+					hit = true
+				}
+			// level 2
+			xc = 401
+			yc = m * xc + d
+			if ( (game.game_type ===2)
+				&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
+				&& ( ((yc >= 45) && (yc <= 155)) ||  ((yc >= 350) && (yc <= 450) )  )
+				){
+					game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+					let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - xc))
+					if ( xc >= game.ballpos[0]) { game.ballpos[0] = xc - delta}
+					if ( xc < game.ballpos[0]) { game.ballpos[0] = xc + delta}
+					game.ballvel[0] = game.ballvel[0] * -1 
+					hit = true
+				}
+			xc = 599
+			yc = m * xc + d
+			if ( (game.game_type ===2)
+				&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
+				&& ( ((yc >= 45) && (yc <= 155)) ||  ((yc >= 350) && (yc <= 450) )  )
+				){
+					game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+					let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - xc))
+					if ( xc >= game.ballpos[0]) { game.ballpos[0] = xc - delta}
+					if ( xc < game.ballpos[0]) { game.ballpos[0] = xc + delta}
+					//game.ballpos[0] = xc >= game.ballpos[0] ? xc - delta: xc + delta
+					game.ballvel[0] = game.ballvel[0] * -1
+					hit = true
+				}
+				//level 3
+				xc = 401
+				yc = m * xc + d
+				if ( (game.game_type ===3)
+					&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
+					&& ( ((yc >= 50) && (yc <= 150)) ||  ((yc >= 350) && (yc <= 450) )  )
+					){
+						game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+						let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - xc))
+						if ( xc >= game.ballpos[0]) { game.ballpos[0] = xc - delta}
+						if ( xc < game.ballpos[0]) { game.ballpos[0] = xc + delta}
+						//game.ballpos[0] = xc >= game.ballpos[0] ? xc - delta: xc + delta
+						game.ballvel[0] = game.ballvel[0] * -1  
+						hit = true
+					}
+				xc = 599
+				yc = m * xc + d
+				if ( (game.game_type ===3)
+					&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
+					&& ( ((yc >= 50) && (yc <= 150)) ||  ((yc >= 350) && (yc <= 450) )  )
+					){
+						game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+						let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - xc))
+						if ( xc >= game.ballpos[0]) { game.ballpos[0] = xc - delta}
+						if ( xc < game.ballpos[0]) { game.ballpos[0] = xc + delta}
+						game.ballvel[0] = game.ballvel[0] * -1  
+						hit = true
+					}
+			if ( (hit === false) && ((game.ballpos[0] + game.ballvel[0]*game.game_vel) > 990))	{ //goal in p2
+				game.p1ptos = game.p1ptos + 1
+				game.ballpos[0]=500
+				game.ballpos[1]=250 
+				let ang = Math.random()*(2) + -1
+				game.ballvel=[-Math.cos(ang),Math.sin(ang)]
+				game.game_vel = Math.abs(game.game_vel)
+				hit = true
+			}
+			if ( (hit === false) && ((game.ballpos[0] + game.ballvel[0]*game.game_vel) < 10))	{ //goal in p1
+				game.p2ptos = game.p2ptos + 1
+				game.ballpos[0]=500
+				game.ballpos[1]=250
+				let ang = Math.random()*(2) + -1
+				game.ballvel=[Math.cos(ang),Math.sin(ang)]
+				game.game_vel = Math.abs(game.game_vel)
+				hit = true
+			}
+			if (  (hit === false) && (
+				((game.ballpos[1] + game.ballvel[1]*game.game_vel) > 500) || ((game.ballpos[1] + game.ballvel[1]*game.game_vel) < 0)))  { //rebote horizontal
+				game.ballvel[1] = game.ballvel[1] * -1
+			}
+			if (hit===false){
+				game.ballpos[0] = game.ballpos[0] + game.ballvel[0]*game.game_vel
+				game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+			}
+
+		} 
+	  }
     }
     //Sending games to clients
-    @Interval(1000)
+    @Interval(30)
     handleSendingInterval() {
-      this.logger.log("Sending games");
-      //console.log('Sending Games');
-	  this.wss.emit('server-game', "prueba" );	
+	  this.wss.emit('server-game', {
+		command: 'GAME_LIST',
+		data: GlobalServiceGames.games,
+		timestamp:  Date.now() 
+	 	} );	
     }
 }
+ 
