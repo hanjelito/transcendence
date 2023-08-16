@@ -1,13 +1,16 @@
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { GameWsService } from './game-ws.service';
 import { Socket, Server } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import {Inject, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateMessageWDto } from '../message-ws/dto/create-message-w.dto';
 import { MessageWsGateway } from '../message-ws/message-ws.gateway';
 import { Interval} from '@nestjs/schedule';
 import {GlobalServiceGames} from '../services/games.service'
+import {GamesUserService} from '../games _user/gamesuser.service'
+import { match } from 'assert';
+import {GamesService} from '../games/games.service'
 
 @WebSocketGateway({
 	cors: {
@@ -20,17 +23,21 @@ import {GlobalServiceGames} from '../services/games.service'
 })
 
 export class GameWsGateway {
-
+	//@Inject(GamesService)
 	private readonly logger = new Logger("Game Logic");
+	//private readonly gamesService: GamesService;
 	constructor(
+		//@Inject(GamesService)
 		private readonly gameWsService: GameWsService,
 		private readonly jwtService: JwtService,
 		private readonly authService: AuthService,
+		private readonly gamesService : GamesService,
+		private readonly gamesuserService : GamesUserService,
 	) {}
 
 	@WebSocketServer()
 	wss: Server;
-
+ 
 	afterInit() {
 		this.logger.log("Websocket Gateway initialized");
 	}
@@ -82,7 +89,7 @@ export class GameWsGateway {
 								game.p1_state = payload.params.player_status;
 								if (game.p1_state & game.p2_state){
 									game.game_status = 1
-									game.game_count= 5;
+									game.game_count= GlobalServiceGames.game_cfg.time_start;
 								}
 								break
 							}
@@ -90,7 +97,7 @@ export class GameWsGateway {
 								game.p2_state = payload.params.player_status;
 								if (game.p1_state & game.p2_state){
 									game.game_status = 1
-									game.game_count= 5;
+									game.game_count= GlobalServiceGames.game_cfg.time_start;
 								}
 								break
 							}	
@@ -153,15 +160,16 @@ export class GameWsGateway {
 				}
 				if (flag === 0){
 					let ang = Math.random()*(2) + -1
+					let c = GlobalServiceGames.game_cfg.time_wait
 					GlobalServiceGames.games.push( {
 						game_id: GlobalServiceGames.games.length + 1,
 						game_status:0,
-						game_count: 120,
+						game_count: GlobalServiceGames.game_cfg.time_wait,
 						game_type: payload.params.game_level, 
-						game_vel: 10,
+						game_vel: GlobalServiceGames.game_cfg.game_vel,
 						ballpos:[500,250],
 						ballvel:[Math.cos(ang),Math.sin(ang)],
-						ballrad: 5,
+						ballrad: GlobalServiceGames.game_cfg.ballrad,
 						p1id: payload.params.player_id_1,
 						p1nick: payload.params.player_nick_1,
 						p1y:250,
@@ -174,7 +182,7 @@ export class GameWsGateway {
 						p2time :Date.now(), 
 						p2ptos:0,
 						p2_state: false, 
-						pad:[5,100]
+						pad:GlobalServiceGames.game_cfg.pad
 						}
 					)
 					GlobalServiceGames.waiting_room = null
@@ -259,19 +267,53 @@ export class GameWsGateway {
 				}
 				if (game.game_status === 1  && game.game_count <= 0){
 					game.game_status = 2
-					game.game_count = 30 // Si tiempo limite de partida
+					game.game_count = GlobalServiceGames.game_cfg.time_play // Si tiempo limite de partida
 				}
 				if (game.game_status === 2  && game.game_count <= 0){  
 					game.game_status = 3
-					game.game_count = 4 //  tiempo vista resultados
+					game.game_count = GlobalServiceGames.game_cfg.time_show //  tiempo vista resultados
 				}
 				if (game.game_status === 3  && game.game_count <= 0){  
 					game.game_status = 4
 					game.game_count = 0 // 
 					//save results in data base before destroy
-
+					this.gamesService.create({
+						p1_id: game.p1id,
+						p1_nick: game.p1nick,
+						p2_id: game.p2id,
+						p2_nick: game.p2nick,
+						p1_goals: game.p1ptos,
+						p2_goals: game.p2ptos,
+						p1_ptos: game.p1ptos > game.p2ptos ? 3: (game.p1ptos === game.p2ptos ? 1: 0),
+						p2_ptos: game.p2ptos > game.p1ptos ? 3: (game.p1ptos === game.p2ptos ? 1: 0),
+						timestamp:  Date.now()
+					})
+					
+					this.gamesuserService.create({
+						player_id: game.p1id,
+						nick: game.p1nick,
+						goalF: game.p1ptos,
+						goalC: game.p2ptos,
+						win: game.p1ptos > game.p2ptos ? 1: 0,
+						los: game.p1ptos < game.p2ptos ? 1: 0,
+						tid: game.p1ptos === game.p2ptos ? 1: 0,
+						ptos: game.p1ptos > game.p2ptos ? 3: (game.p1ptos === game.p2ptos ? 1: 0),
+						timestamp:  Date.now()
+					})
+					this.gamesuserService.create({
+						player_id: game.p2id,
+						nick: game.p2nick,
+						goalF: game.p2ptos,
+						goalC: game.p1ptos,
+						win: game.p2ptos > game.p1ptos ? 1: 0,
+						los: game.p2ptos < game.p1ptos ? 1: 0,
+						tid: game.p2ptos === game.p1ptos ? 1: 0,
+						ptos: game.p2ptos > game.p1ptos ? 3: (game.p2ptos === game.p1ptos ? 1: 0),
+						timestamp:  Date.now()
+					})
+					
 				}
-				if (game.game_status === 4  && game.game_count <= 0){  
+				if (game.game_status === 4  && game.game_count <= 0){  //destroy ended games
 					let tmp_array=[]
 					let i = 0
 					for (let gam of GlobalServiceGames.games){
@@ -305,11 +347,20 @@ export class GameWsGateway {
 			if ( ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) // player 2
 				 && ( (yc >= (game.p2y - game.pad[1]/2)) && (yc <= (game.p2y + game.pad[1]/2)) )
 				){
-					game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
-					let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - 990))
-					game.ballpos[0] = xc > game.ballpos[0] ? xc - delta: xc + delta
-					game.ballvel[0] = game.ballvel[0] * -1
+					//game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+					//let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - 990))
+					//game.ballpos[0] = xc > game.ballpos[0] ? xc - delta: xc + delta
+					//game.ballvel[0] = game.ballvel[0] * -1
 					//game.ballpos[0] = game.ballpos[0] + game.ballvel[0]*game.game_vel
+					let rebounce_angle=-((game.p2y-yc)/(game.pad[1]/2))*(75*Math.PI/180)
+					let d1 = Math.sqrt(Math.pow(game.ballvel[0]*game.game_vel,2)+Math.pow(game.ballvel[1]*game.game_vel,2))
+					let d2 = Math.sqrt(Math.pow(yc-game.ballpos[1],2)+Math.pow(xc-game.ballpos[0],2))
+					//console.log(d1,d2,d1-d2)
+					game.ballvel[0] = -Math.cos(rebounce_angle)
+					game.ballvel[1] = Math.sin(rebounce_angle)
+					game.ballpos[0] = xc+(d1-d2)*game.ballvel[0]
+					game.ballpos[1] = yc+(d1-d2)*game.ballvel[1]
+					//console.log("vx:",game.ballvel[0], " vy:", game.ballvel[1], "x:", game.ballpos[0], "y:", game.ballpos[1])
 					hit = true
 				}
 			// Pad Player 1
@@ -318,10 +369,22 @@ export class GameWsGateway {
 			if ( ((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) // player 1
 				&& ( (yc >= (game.p1y - game.pad[1]/2)) && (yc <= (game.p1y + game.pad[1]/2)) )
 				){
-					game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
-					let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - 10))
-					game.ballpos[0] = xc > game.ballpos[0] ? xc - delta: xc + delta
-					game.ballvel[0] = game.ballvel[0] * -1
+					//game.ballpos[1] = game.ballpos[1] + game.ballvel[1]*game.game_vel
+					//let delta = (Math.abs(game.ballvel[0]*game.game_vel) - Math.abs(game.ballpos[0] - 10))
+					//game.ballpos[0] = xc > game.ballpos[0] ? xc - delta: xc + delta
+					//game.ballvel[0] = game.ballvel[0] * -1
+					let rebounce_angle=-((game.p1y-yc)/(game.pad[1]/2))*(75*Math.PI/180)
+					let d1 = Math.sqrt(Math.pow(game.ballvel[0]*game.game_vel,2)+Math.pow(game.ballvel[1]*game.game_vel,2))
+					let d2 = Math.sqrt(Math.pow(yc-game.ballpos[1],2)+Math.pow(xc-game.ballpos[0],2))
+					console.log(d1,d2,d1-d2)
+					game.ballvel[0] = Math.cos(rebounce_angle)
+					game.ballvel[1] = Math.sin(rebounce_angle)
+					game.ballpos[0] = xc+(d1-d2)*game.ballvel[0] 
+					game.ballpos[1] = yc+(d1-d2)*game.ballvel[1]
+					console.log("hit: ",(game.p1y-yc)/(game.pad[1]/2))
+					console.log("angle: ",rebounce_angle)
+					console.log("dt: ",d1, "d1:",d2,"dp:",d1-d2)
+					console.log("vx:",game.ballvel[0], " vy:", game.ballvel[1], "x:", game.ballpos[0], "y:", game.ballpos[1])
 					hit = true
 				}
 			// level 2

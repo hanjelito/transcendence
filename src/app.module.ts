@@ -9,6 +9,8 @@ import { UserModule } from './user/user.module';
 import { ContactModule } from './contact/contact.module';
 import { MessageWsModule } from './message-ws/message-ws.module';
 import { GameWsModule } from './game-ws/game-ws.module';
+import { GamesModule } from './games/games.module';
+import { GamesUserModule } from './games _user/gamesuser.module';
 import { ApiTokenCheckMiddleware } from './common/middleware/api-token-check-middleware';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -40,7 +42,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     UserModule,
     MessageWsModule,
     GameWsModule,
+    GamesModule,
+    GamesUserModule,
     ContactModule,
+
   ],
 
   controllers: [],
