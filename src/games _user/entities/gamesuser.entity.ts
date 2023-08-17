@@ -6,6 +6,7 @@ import {
 	OneToMany, PrimaryGeneratedColumn
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
+import { User } from '../../user/entities/user.entity';
 
 
 // @Entity() define la clase como una entidad de TypeORM.
@@ -123,4 +124,12 @@ export class GamesUser {
 		unique: false,
 	})
 	timestamp: number;
+	/*
+	@ManyToOne(
+		() => User,
+		( user ) => user.gameuser,
+		{ eager: true },
+	)
+	user: User;
+	*/
 }

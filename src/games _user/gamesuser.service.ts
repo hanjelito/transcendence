@@ -4,6 +4,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from '../auth/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GamesUser } from './entities/gamesuser.entity';
+import { User } from '../user/entities/user.entity'
 import { Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
 
@@ -12,8 +13,9 @@ export class GamesUserService {
   
   constructor(
     @InjectRepository(GamesUser)
+    @InjectRepository(User)
     private gamesuserRepository: Repository<GamesUser>,
-    
+    private userRepository: Repository<User>,
   )
   {}
 
@@ -23,17 +25,21 @@ export class GamesUserService {
   }
 
   async findAll() {
-    const data =  await this.gamesuserRepository.createQueryBuilder()
-    .select('player_id')
-    .addSelect("SUM(ptos)","Ptos")
-    .addSelect("SUM(win)","Wins")
-    .addSelect("SUM(los)","Loses")
-    .addSelect("SUM(tid)","Tides")
+    const data =  await this.gamesuserRepository.createQueryBuilder("gamesuser")
+    .select('gameuser.player_id')
+    .addSelect("SUM(gameuser.ptos)","Ptos")
+    .addSelect("SUM(gameuser.win)","Wins")
+    .addSelect("SUM(gameuser.los)","Loses")
+    .addSelect("SUM(gameuser.tid)","Tides")
+    .addSelect("user.id","id")
+    //.leftJoinAndSelect('gameuser.user', 'user', 'gameuser.player_id = user.id')
+    //.addSelect(['settings.name', 'settings.prop1', 'settings.prop2'])
     //.addSelect("SUM(goalF)","GF")
     //.addSelect("SUM(goalC)","GC")
     //.addSelect("COUNT(player_id)","Games")
     //.where('player_id= :playerid', {playerid: id})
-    .groupBy("player_id")
+    //.leftJoinAndSelect("user.photos", "photo")
+    .groupBy("gameuser.player_id, user.id")
     .printSql()
     .orderBy({
       "SUM(ptos)": "DESC",
