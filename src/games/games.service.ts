@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 //import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from '../auth/dto';
@@ -10,7 +10,7 @@ import {GlobalServiceGames} from '../services/games.service'
 
 @Injectable()
 export class GamesService {
-  
+  private readonly logger = new Logger("Game Logic");
   constructor(
     @InjectRepository(Games)
     private gamesRepository: Repository<Games>,
@@ -19,6 +19,7 @@ export class GamesService {
   {}
 
   async create(createGameDto: any) {
+    this.logger.log("Juego guardado:" + JSON.stringify(createGameDto) );
     return this.gamesRepository.save(createGameDto);
     //return `This action create a game` + createGameDto;
   }
@@ -36,11 +37,9 @@ export class GamesService {
                  {p2_id:id}]})
   }
   liveGamesList() {
-    console.log("prueba list")
     return (GlobalServiceGames.games)
   }
   waitingRoom() {
-    console.log("prueba waiting")
     return (GlobalServiceGames.waiting_room)
   }
 }

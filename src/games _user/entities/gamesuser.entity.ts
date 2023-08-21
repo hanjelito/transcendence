@@ -21,20 +21,24 @@ export class GamesUser {
 	})
 	@PrimaryGeneratedColumn('uuid')
 	// Propiedad id del juego que es un identificador único generado automáticamente.
-	id: string;
+	id_gameuser: string;
 
 	@ApiProperty({
 		example: '9f6443c9-5397-4bc5-9cc3-245e2c720cc9',
 		description: 'id de jugador anfitrión',
 		uniqueItems: false,
 	})
+	/*
 	@Column({
 		type: 'text',
 		unique: false,
 		
 	})
+	*/
+	@ManyToOne(() => User, (user) => user.gameuser)
+    id: User
 	// Propiedad id del jugador anfitrión que debe ser una cadena de caracteres.
-	player_id: string;
+	//id: string;
 
 	// Propiedad user del usuario, de tipo texto y único.
 	@ApiProperty({
@@ -57,7 +61,7 @@ export class GamesUser {
 		type: 'int',
 		unique: false,
 	})
-	goalF: number;
+	goalf: number;
 
 	@ApiProperty({
 		example: '4',
@@ -68,7 +72,7 @@ export class GamesUser {
 		type: 'int',
 		unique: false,
 	})
-	goalC: number;
+	goalc: number;
 
 	@ApiProperty({
 		example: '4',

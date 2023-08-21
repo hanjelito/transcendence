@@ -127,15 +127,15 @@ export class User {
 	)
 	// Relación uno a muchos entre el usuario y el chat.
 	chat: Chat
-	/*
+	
 	@ApiProperty()
 	@OneToMany(
 		() => GamesUser,
-		( gameuser) => gameuser.user,
+		( gameuser) => gameuser.id,
 	)
 	// Relación uno a muchos entre el usuario y el chat.
-	gameuser: GamesUser
-	*/
+	gameuser: GamesUser[]
+	
 	@ApiProperty()
 	@OneToMany(
 		() => ChatUser,
