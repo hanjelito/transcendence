@@ -114,6 +114,7 @@ export class GameWsGateway {
 			// join waiting room
 			if (payload.command === 'JOIN_WAITING_ROOM'){
 				//Check if you are in a game --> notify ?
+				console.log("jjjj")
 				GlobalServiceGames.waiting_room = payload.params
 				this.wss.emit('server-game', {
 					command: 'WAITING_ROOM',
@@ -384,7 +385,7 @@ export class GameWsGateway {
 				}
 			xc = 599
 			yc = m * xc + d
-			if ( (game.game_type >2)
+			if ( (game.game_type >=2)
 				&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
 				&& ( ((yc >= 51) && (yc <= 151)) ||  ((yc >= 351) && (yc <= 451) ) )
 				){
