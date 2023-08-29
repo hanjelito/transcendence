@@ -1,0 +1,74 @@
+version: "3"
+
+networks:
+  trascendence_network:
+    name: trascendence_network
+
+volumes:
+  vol_frontend:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/front
+  vol_backend:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/back
+
+services:
+  backend:
+    container_name: backend
+    hostname:  backend
+    build:
+      dockerfile: Dockerfile
+      context: ./back/
+     # Only will build development stage from our dockerfile
+     # target: development
+    restart: always
+    volumes: 
+      - vol_backend:/backend
+    ports: 
+      - 3000:3000
+
+  #   - 4001:4001
+  # Run a command against the development stage of the image
+  #  command: "npm run start:dev"
+  #  depends_on:
+  #    #CHANGE 2: it prevents issuing a request while the server is starting to depend on the healthy status of postgres-db 
+  #    postgres-db:
+  #      condition: service_healthy
+    networks:
+      - trascendence_network
+      #trascendence_network:
+        # ipv4_address: 192.168.55.10
+
+  frontend:
+    container_name: frontend
+    hostname:  frontend
+    build: 
+      dockerfile: Dockerfile
+      context: ./front/
+    # Only will build development stage from our dockerfile
+    #  target: development
+    restart: always
+    ports: 
+      - 8080:8080
+    env_file:
+      - ./front/.env
+#    environment:
+#      BASE_URL: "http://localhost:4200"
+  #  command: "npm run serve"
+  #  depends_on:
+  #    - backend
+    volumes:
+      - "vol_frontend:/frontend"
+    networks:
+      - trascendence_network
+      # trascendence_network:
+      #   ipv4_address: 192.168.55.11
+
+
+  

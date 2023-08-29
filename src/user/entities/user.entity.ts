@@ -10,7 +10,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Chat } from "../../chat/entities";
 import { ChatUser } from "../../chat-user/entities/chat-user.entity";
 import { Contact } from "../../contact/entities/contact.entity";
-
+import { GamesUser} from "../../games _user/entities/gamesuser.entity";
 
 // @Entity() define la clase como una entidad de TypeORM.
 // Clase User que representa la entidad de usuario en la base de datos.
@@ -127,7 +127,15 @@ export class User {
 	)
 	// Relación uno a muchos entre el usuario y el chat.
 	chat: Chat
-
+	
+	@ApiProperty()
+	@OneToMany(
+		() => GamesUser,
+		( gameuser) => gameuser.id,
+	)
+	// Relación uno a muchos entre el usuario y el chat.
+	gameuser: GamesUser[]
+	
 	@ApiProperty()
 	@OneToMany(
 		() => ChatUser,
