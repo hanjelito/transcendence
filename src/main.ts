@@ -49,7 +49,6 @@ async function bootstrap() {
   document.security = [{ bearerAuth: [] }];
   SwaggerModule.setup('api', app, document);
 
-
   // Inicia la aplicación en el puerto 3000.
   app.enableCors({
     origin: '*',

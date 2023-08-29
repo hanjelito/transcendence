@@ -4,8 +4,9 @@ import { Socket, Server } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
-import { CreateMessageWDto } from '../message-ws/dto/create-message-w.dto';
 import { MessageWsGateway } from '../message-ws/message-ws.gateway';
+
+import { JwtPayload } from '../auth/interfaces';
 
 
 @WebSocketGateway({

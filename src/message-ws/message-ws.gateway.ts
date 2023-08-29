@@ -34,7 +34,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	@WebSocketServer()
 	wss: Server;
 
-	private clients = new Map<string, string[]>();
+	// private clients = new Map<string, string[]>();
 
 	// Método que se ejecuta después de la inicialización del gateway.
 	afterInit() {
@@ -50,7 +50,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		  
 		  let payload: JwtPayload;
 		  // Intenta verificar el token y registra al cliente en el servicio de mensajes.
-		  
 		try{
 			payload = this.jwtService.verify(token);
 			//
@@ -63,7 +62,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			return;
 		}
 	}
-		
 	// Método que se ejecuta cuando un cliente se desconecta.
 	handleDisconnect(client: Socket) {
 		this.socketManagerService.unregisterClient(client);
@@ -103,6 +101,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		try {
 			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
 			const channel = await this.chatMessageWsService.getUserChanelRegister(client, params, idUser);
+			
 	  
 			client.emit('message-server',{
 				response: channel
@@ -122,6 +121,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		try {
 			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
 			const userOnlineChat = await this.messageWsService.getActiveChatUsers(params.target)
+			console.log(idUser);
 	
 			if (params.room) {
 				userOnlineChat.forEach(user => {
@@ -130,33 +130,33 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 							id: idUser,
 							user: params.user,
 							message: params.message,
-							type: "room"
+							type: "room",
+							targetId: params.target
 						};
-						const sendValue = idUser != this.socketManagerService.getUserIdBySocketId(clientId) ? true: false;
-						this.wss.to(clientId).emit('message-server', messageData);
-						this.emitMessageAndNotification(client, sendValue, clientId, 'message-server', messageData);
+						if (clientId != client.id) {
+							this.wss.to(clientId).emit('message-server', messageData);
+							this.emitMessageAndNotification(client, true, clientId, 'message-server', messageData);
+						}
 					});
 				});
 			}
 			else {
 				const idSockets = this.socketManagerService.getClients(params.target);
 				const userDB = await this.messageWsService.getUserFullData(idUser);
-				console.log(idUser);
+			
 				idSockets.forEach(idSocket => {
 					const messageData = {
-						id: userDB.id,
+						id: params.target,
 						user: userDB.login,
-						// name: userDB.name,
-						// lastName: userDB.lastName,
-						// login: userDB.login,
 						message: params.message,
-						type: "private"
+						type: "private",
+						targetId: userDB.id
 					};
-					//TODO falta para enviar mensajes a chat privados
-					const sendValue = idUser != this.socketManagerService.getUserIdBySocketId(client.id) ? true: false;
-					this.wss.to(idSockets).emit('message-server', messageData);
-					this.wss.to(client.id).emit('message-server', messageData);
-					this.emitMessageAndNotification(client, sendValue, idSocket, 'message-server', messageData);
+					// Comprueba si el ID del socket del cliente es diferente del ID del socket del remitente.
+					if (idSocket != client.id) {
+						this.wss.to(idSocket).emit('message-server', messageData);
+						this.emitMessageAndNotification(client, true, idSocket, 'message-server', messageData);
+					}
 				});
 			}
 		} catch (error) {
@@ -168,6 +168,8 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		if (sendValue)
 			this.socketEventsService.emitNotificationPrivate(client, clientId,  { type: 'chat-message', data: messageData});
 	}
+
+	// private emitContact
 	// notificaciones
 
 	async handleKick(client: Socket, params: any) {
