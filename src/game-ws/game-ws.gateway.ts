@@ -5,18 +5,12 @@ import {Inject, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
 import { MessageWsGateway } from '../message-ws/message-ws.gateway';
-<<<<<<< HEAD
-
-import { JwtPayload } from '../auth/interfaces';
-
-=======
 import { Interval} from '@nestjs/schedule';
 import {GlobalServiceGames} from '../services/games.service'
 import {GamesUserService} from '../games _user/gamesuser.service'
 import { match } from 'assert';
 import {GamesService} from '../games/games.service'
 import { json } from 'stream/consumers';
->>>>>>> origin/feature/game
 
 @WebSocketGateway({
 	cors: {
