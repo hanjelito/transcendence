@@ -43,12 +43,12 @@ export class GameWsGateway {
 	}
 
 	async handleConnection(client: Socket) {
-		this.logger.log("Cliente conectado: "+client.id)
+		// this.logger.log("Cliente conectado: "+client.id)
 		this.wss.emit('status', `Conectado` );
 	}
 
 	handleDisconnect(client: Socket) {
-		this.logger.log("Cliente desconectado: "+client.id)
+		// this.logger.log("Cliente desconectado: "+client.id)
 		this.wss.emit('status', `Desconectado` );	
 	}
 

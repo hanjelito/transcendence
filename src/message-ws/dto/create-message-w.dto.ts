@@ -4,19 +4,11 @@ import { Type } from 'class-transformer';
 export class Params {
   @IsString()
   @IsOptional()
-  room?: string;
+  id?: string;
 
   @IsString()
   @IsOptional()
-  message?: string;
-
-  @IsString()
-  @IsOptional()
-  event?: string;
-
-  @IsString()
-  @IsOptional()
-  user?: string;
+  type?: string;
 
   @IsString()
   @IsOptional()
@@ -24,15 +16,19 @@ export class Params {
 
   @IsString()
   @IsOptional()
-  password?: string;
-
-  @IsString()
-  @IsOptional()
   reason?: string;
 
   @IsString()
   @IsOptional()
-  mode?: string;
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  user?: string;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
 
   @IsString()
   @IsOptional()
@@ -40,12 +36,14 @@ export class Params {
 
   @IsString()
   @IsOptional()
-  nickname?: string;
+  message?: string;
+
+  @IsString()
+  @IsOptional()
+  command: string;
 }
 
 export class CreateMessageWDto {
-  @IsString()
-  command: string;
 
   @IsObject()
   @ValidateNested()

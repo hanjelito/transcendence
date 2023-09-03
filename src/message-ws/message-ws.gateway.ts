@@ -71,11 +71,10 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	@SubscribeMessage('client-message')
 	async handleMessage(client: Socket, payload: CreateMessageWDto) {
 		try {
-			const command = payload.command;
 			const params = payload.params;
-
+			// console.log(payload);
 			// Dependiendo del comando en el payload, ejecuta diferentes funciones.
-			switch (command) {
+			switch (params.command) {
 				case 'JOIN':
 					await this.handleJoin(client, params);
 					break;
@@ -89,7 +88,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 					await this.handleKick(client, params);
 					break;
 				default:
-					throw new NotFoundException(`Unsupported command: ${command}`);
+					throw new NotFoundException(`Unsupported command: ${params.command}`);
 			}
 		} catch (error) {
 			client.emit('error', { response: error.response });
@@ -120,18 +119,18 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	async handlePrivmsg(client: Socket, params: Params) {
 		try {
 			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
-			const userOnlineChat = await this.messageWsService.getActiveChatUsers(params.target)
-			console.log(idUser);
-	
-			if (params.room) {
+			if (params.type === 'room') {
+				const userOnlineChat = await this.messageWsService.getActiveChatUsers(params.target)
 				userOnlineChat.forEach(user => {
 					user.clientIds.forEach(clientId => {
 						const messageData = {
-							id: idUser,
-							user: params.user,
-							message: params.message,
-							type: "room",
-							targetId: params.target
+							id:			idUser,
+							user:		params.user,
+							message:	params.message,
+							target:		params.target,
+							type:		params.type,
+							name:		params.name,
+							command:	params.command,
 						};
 						if (clientId != client.id) {
 							this.wss.to(clientId).emit('message-server', messageData);
@@ -149,8 +148,8 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 						id: params.target,
 						user: userDB.login,
 						message: params.message,
-						type: "private",
-						targetId: userDB.id
+						target: userDB.id,
+						type: params.type,
 					};
 					// Comprueba si el ID del socket del cliente es diferente del ID del socket del remitente.
 					if (idSocket != client.id) {
