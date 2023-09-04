@@ -17,7 +17,6 @@ import { GamesUser} from "../../games _user/entities/gamesuser.entity";
 @Entity('users')
 export class User {
 	
-	
 	@ApiProperty({
 		example: '746ef755-a990-46b8-8b4b-feb1be6cb46c',
 		description: 'User Id',

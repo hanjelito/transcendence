@@ -113,19 +113,20 @@ export class GameWsGateway {
 			// join waiting room
 			if (payload.command === 'JOIN_WAITING_ROOM'){
 				//Check if you are in a game --> notify ?
-				console.log("jjjj")
+				this.logger.log("Command Join Waiting Room Recieved")
 				GlobalServiceGames.waiting_room = payload.params
 				this.wss.emit('server-game', {
-					command: 'WAITING_ROOM',
+					command: 'UPDATE_WAITING_ROOM',
 					data: GlobalServiceGames.waiting_room,
 					timestamp:  Date.now() 
 				} );
 			}
 			// join waiting room
 			if (payload.command === 'LEAVE_WAITING_ROOM'){
+				this.logger.log("Command Leave Waiting Room Recieved")
 				GlobalServiceGames.waiting_room = null
 				this.wss.emit('server-game', {
-					command: 'WAITING_ROOM',
+					command: 'UPDATE_WAITING_ROOM',
 					data: GlobalServiceGames.waiting_room,
 					timestamp:  Date.now() 
 				} );
@@ -218,7 +219,7 @@ export class GameWsGateway {
 				}
 				// refresh waiting room
 				this.wss.emit('server-game', {
-					command: 'WAITING_ROOM',
+					command: 'UPDATE_WAITING_ROOM',
 					data: GlobalServiceGames.waiting_room,
 					timestamp:  Date.now() 
 				} );
