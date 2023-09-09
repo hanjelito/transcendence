@@ -10,6 +10,15 @@ import { JwtPayload } from '../auth/interfaces';
 import { ChatMessageWsService, MessageWsService, SocketManagerService } from './services';
 import { SocketEventsService } from 'src/services/socket-events.service';
 
+
+interface Contacts {
+	id: string;
+	login: string;
+	name: string;
+	images: string[];
+	blocked: boolean;
+}
+
 // Decorador para crear un gateway WebSocket con el namespace 'message-ws'.
 // ws://localhost:3000/message-ws
 @WebSocketGateway({
@@ -44,28 +53,91 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	// Método que se ejecuta cuando un cliente se conecta.
 	async handleConnection(client: Socket) {
 
+	}
+	// Método que se ejecuta cuando un cliente se desconecta.
+	async handleDisconnect(client: Socket) {
+		console.log('handleDisconnect:', client.id);
+		const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
+		if (idUser){
+			await this.contacstEmit(client, idUser);
+		}
+		this.socketManagerService.unregisterClient(client);
+	}
+
+	// regitra los ids logueados a un map
+	@SubscribeMessage('client-register')
+	async handleRegisterId(client: Socket, data: any): Promise<any>  {
+		console.log('handleRegisterId:', client.id);
 		// Extraer el token JWT del encabezado del mensaje de conexión.
-        const token = client.handshake.headers.authorization;
-  		// const token = authHeader && authHeader.split(' ')[1];
-		  
-		  let payload: JwtPayload;
+		let payload: JwtPayload;
 		  // Intenta verificar el token y registra al cliente en el servicio de mensajes.
 		try{
-			payload = this.jwtService.verify(token);
-			//
+			payload = this.jwtService.verify(data.token);
 			this.socketManagerService.registerClient(payload.id, client.id);
-			//
+			//me retorna mis contactos online
+			this.contacstEmit(client, payload.id);
 
+			//
+			this.notifyContactsOfOnlineStatus(payload.id);
+			//
 		} catch(error) {
-			// Si hay un error durante la verificación del token, desconecta al cliente.
+			client.emit('message-error', { response: error.response });
+			
 			client.disconnect(true);
 			return;
 		}
 	}
-	// Método que se ejecuta cuando un cliente se desconecta.
-	handleDisconnect(client: Socket) {
-		this.socketManagerService.unregisterClient(client);
+
+	//
+	@SubscribeMessage('client-update-contact')
+	async handleclientUpdateContact(client: Socket, data: any): Promise<any>  {
+		let payload: JwtPayload;
+		payload = this.jwtService.verify(data.token);
+		
+		this.contacstEmit(client, payload.id);
 	}
+
+	//socket
+	async contacstEmit(client: Socket, IdUUID: string) {
+		console.log('contacstEmit:', client.id);
+		// Obtiene el ID del usuario por medio del ID del socket.
+		const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
+	
+		// Obtiene la lista de contactos del usuario de la base de datos.
+		const contacts: Contacts[] = await this.messageWsService.getContactById(idUser);
+	
+		// Crea un nuevo arreglo transformando los datos de los contactos.
+		const transformedContacts = contacts.map(contactItem => {
+			if (this.socketManagerService.getClients(contactItem.id).length > 0) {
+				const { images, blocked, ...rest } = contactItem; // Usa desestructuración para omitir propiedades.
+				return rest;
+			}
+			return null;
+		}).filter(item => item !== null); // Usa filter para eliminar los nulos después de la transformación.
+	
+		// Obtiene los sockets abiertos por cada cliente.
+		const idSockets = this.socketManagerService.getClients(IdUUID);
+	
+		// Emite datos a cada socket.
+		idSockets.forEach(idSocket => {
+			this.wss.to(idSocket).emit('contact-online-server', transformedContacts);
+		});
+	}
+	// indica que tiene que actualizar su lista de contactos
+
+	async notifyContactsOfOnlineStatus(userId: string) {
+		// Obtiene la lista de contactos del usuario que acaba de conectarse.
+		const userContacts: Contacts[] = await this.messageWsService.getContactById(userId);
+	
+		// Para cada contacto del usuario, emitir un mensaje notificando que el usuario está en línea.
+		userContacts.forEach(async (contact) => {
+			const contactSockets = this.socketManagerService.getClients(contact.id);
+			contactSockets.forEach(socketId => {
+				this.wss.to(socketId).emit('status-contact-server', { userId, status: 'online' });
+			});
+		});
+	}
+
 
 	// Otro método para manejar diferentes tipos de mensajes de los clientes.
 	@SubscribeMessage('client-message')
@@ -91,13 +163,14 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 					throw new NotFoundException(`Unsupported command: ${params.command}`);
 			}
 		} catch (error) {
-			client.emit('error', { response: error.response });
+			client.emit('message-error', { response: error.response });
 		}
 	}
 
 	// Maneja cuando un cliente quiere unirse a un chat.
 	async handleJoin(client: Socket, params: any) {
 		try {
+			
 			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
 			const channel = await this.chatMessageWsService.getUserChanelRegister(client, params, idUser);
 			
@@ -107,7 +180,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			  });
 		} catch (error) {
 			// Emitir un mensaje de error al cliente.
-			client.emit('error', { response: error.response });
+			client.emit('message-error', { response: error.response });
 			
 		}
 	}
@@ -159,7 +232,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 				});
 			}
 		} catch (error) {
-			client.emit('error', { response: error.response });
+			client.emit('message-error', { response: error.response });
 		}
 	}
 
@@ -174,4 +247,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	async handleKick(client: Socket, params: any) {
 		// Aquí se añadiría el código para manejar este caso.
 	}
+
+	
 }
