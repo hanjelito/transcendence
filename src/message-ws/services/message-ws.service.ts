@@ -112,8 +112,11 @@ export class MessageWsService {
 	async getContactById(id: string): Promise<Contacts[]>
 	{
 		try {
-			const contactData = await this.contactService.findOne(id);
-			return contactData;
+			if(id) {
+				const contactData = await this.contactService.findOne(id);
+				return contactData;
+			}
+			return [];
 		} catch (error) {
 			throw new error;
 		}

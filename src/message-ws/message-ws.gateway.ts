@@ -52,34 +52,42 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
 	// Método que se ejecuta cuando un cliente se conecta.
 	async handleConnection(client: Socket) {
-
 	}
 	// Método que se ejecuta cuando un cliente se desconecta.
 	async handleDisconnect(client: Socket) {
-		console.log('handleDisconnect:', client.id);
-		const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
-		if (idUser){
-			await this.contacstEmit(client, idUser);
-		}
+		const IdUUID = this.socketManagerService.getUserIdBySocketId(client.id);
+		const contacts: Contacts[] = await this.messageWsService.getContactById(IdUUID);
 		this.socketManagerService.unregisterClient(client);
+
+		if ((this.socketManagerService.getClients(IdUUID)).length > 0)
+			return ;
+		this.myContactOnline(contacts).then(transformedContactsOnline => {
+			transformedContactsOnline.forEach(contact => {
+				const contactSockets = this.socketManagerService.getClients(contact.id);
+				contactSockets.forEach(socketId => {
+					this.wss.to(socketId).emit('disconnect-contact-server', IdUUID);
+				});
+			});
+		});
+		
 	}
 
 	// regitra los ids logueados a un map
 	@SubscribeMessage('client-register')
 	async handleRegisterId(client: Socket, data: any): Promise<any>  {
-		console.log('handleRegisterId:', client.id);
+		// console.log('handleRegisterId:', client.id);
 		// Extraer el token JWT del encabezado del mensaje de conexión.
 		let payload: JwtPayload;
 		  // Intenta verificar el token y registra al cliente en el servicio de mensajes.
 		try{
 			payload = this.jwtService.verify(data.token);
 			this.socketManagerService.registerClient(payload.id, client.id);
-			//me retorna mis contactos online
-			this.contacstEmit(client, payload.id);
 
-			//
-			this.notifyContactsOfOnlineStatus(payload.id);
-			//
+			// Obtiene la lista de contactos del usuario de la base de datos.
+			const contacts: Contacts[] = await this.messageWsService.getContactById(payload.id);
+			//me retorna mis contactos online
+			await this.contacstEmit(client, payload.id, contacts);
+
 		} catch(error) {
 			client.emit('message-error', { response: error.response });
 			
@@ -88,40 +96,49 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		}
 	}
 
-	//
-	@SubscribeMessage('client-update-contact')
-	async handleclientUpdateContact(client: Socket, data: any): Promise<any>  {
-		let payload: JwtPayload;
-		payload = this.jwtService.verify(data.token);
-		
-		this.contacstEmit(client, payload.id);
-	}
-
 	//socket
-	async contacstEmit(client: Socket, IdUUID: string) {
-		console.log('contacstEmit:', client.id);
+	async contacstEmit(client: Socket, IdUUID: string, contacts: Contacts[]) {
+		// console.log('contacstEmit:', client.id);
 		// Obtiene el ID del usuario por medio del ID del socket.
 		const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
-	
-		// Obtiene la lista de contactos del usuario de la base de datos.
-		const contacts: Contacts[] = await this.messageWsService.getContactById(idUser);
-	
+
 		// Crea un nuevo arreglo transformando los datos de los contactos.
-		const transformedContacts = contacts.map(contactItem => {
-			if (this.socketManagerService.getClients(contactItem.id).length > 0) {
-				const { images, blocked, ...rest } = contactItem; // Usa desestructuración para omitir propiedades.
-				return rest;
-			}
-			return null;
-		}).filter(item => item !== null); // Usa filter para eliminar los nulos después de la transformación.
-	
+		// console.log(contacts);
+		const transformedContactsOnline = await this.myContactOnline(contacts)
+		if (!transformedContactsOnline) {
+			throw new Error("Error transformando contactos");
+		}
 		// Obtiene los sockets abiertos por cada cliente.
 		const idSockets = this.socketManagerService.getClients(IdUUID);
-	
-		// Emite datos a cada socket.
+		// se emite a si mismo.
 		idSockets.forEach(idSocket => {
-			this.wss.to(idSocket).emit('contact-online-server', transformedContacts);
+			this.wss.to(idSocket).emit('my-contact-server', transformedContactsOnline);
 		});
+
+		if (idSockets.length === 1)
+			contacts.forEach(async (contact) => {
+				const contactSockets = this.socketManagerService.getClients(contact.id);
+				contactSockets.forEach(socketId => {
+					this.wss.to(socketId).emit('connect-contact-server', idUser);
+				});
+			});
+	}
+	//
+	async myContactOnline(contacts: Contacts[]): Promise<Contacts[]> {
+		const contactOnline = contacts.map(contactItem => {
+			if (this.socketManagerService.getClients(contactItem.id).length > 0) {
+				const { images, blocked, ...rest } = contactItem; 
+	
+				return {
+					...rest,
+					images: null, 
+					blocked: null
+				};
+			}
+			return null;
+		}).filter(item => item !== null);
+	
+		return contactOnline;
 	}
 	// indica que tiene que actualizar su lista de contactos
 
