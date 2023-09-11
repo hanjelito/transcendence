@@ -93,8 +93,8 @@ export class ChatService {
 		
 			// Verificar si el chat ya existe
 			let existingChat = await this.chatRepository.findOne({ where: { name: chatDetails.name } });
+			console.log(existingChat);
 			const chatUser = new CreateChatUserDto();
-		
 			let chat;
 			if (existingChat) {
 			if(existingChat.password != createChatDto.password )

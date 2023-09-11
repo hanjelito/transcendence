@@ -122,9 +122,11 @@ export class ChatUserService {
 			.innerJoin('chatUser.user', 'user')
 			.where('user.id = :userId', { userId: identifier })
 			.getRawMany();
+
+			
 			
 			if (!chatUsers || chatUsers.length === 0) {
-				throw new NotFoundException(`User with id ${ identifier } is not found in any chat`);
+				return [];
 			}
 			const chatUsersArray = Object.values(chatUsers);
 			return {
