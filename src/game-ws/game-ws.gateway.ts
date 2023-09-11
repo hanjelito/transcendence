@@ -1,7 +1,7 @@
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { GameWsService } from './game-ws.service';
 import { Socket, Server } from 'socket.io';
-import {Inject, Logger } from '@nestjs/common';
+import {Inject, Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
 import { MessageWsGateway } from '../message-ws/message-ws.gateway';
@@ -55,23 +55,62 @@ export class GameWsGateway {
 	@SubscribeMessage('client-game')
 	async handleMessage(client: Socket, payload: any) {
 		try {
-			// send info when request
-			if (payload.command === 'REQUEST_INFO'){
-				// Send waiting room when connected
-				this.wss.emit('server-game', {
-					command: 'WAITING_ROOM',
-					data: GlobalServiceGames.waiting_room,
-					timestamp:  Date.now() 
-				} );
-				// Send game list when connected
-				this.wss.emit('server-game', {
-					command: 'GAME_LIST',
-					data: GlobalServiceGames.games,
-					timestamp:  Date.now() 
-					} );	
+			switch (payload.command) {
+				case 'REQUEST_INFO':
+					await this.requestInfo(client, payload);
+					break;
+				case 'UPDATE_PLAYER_STAT':
+					await this.updatePlayerStatus(client, payload);
+					break;
+				case 'UPDATE_PLAYER_MOV':
+					await this.updatePlayerMove(client, payload);
+					break;
+				case 'JOIN_WAITING_ROOM':
+					await this.joinWaitingRoom(client, payload);
+					break;
+				case 'LEAVE_WAITING_ROOM':
+					await this.leaveWaitingRoom(client, payload);
+					break;
+				case 'CREATED_WAITING_ROOM':
+					await this.createWaitingRoom(client, payload);
+					break;
+				case 'CHALLENGE_ASK':
+					await this.challengeAsk(client, payload);
+					break;
+				case 'CHALLENGE_ACCEPT':
+					await this.challengeAccept(client, payload);
+					break;		
+				case 'CHALLENGE_DISMISS':
+					await this.challengeDismiss(client, payload);
+					break;					
+				default:
+					throw new NotFoundException(`Unsupported command: ${payload.command}`);
 			}
-			// Player status
-			if (payload.command === 'UPDATE_PLAYER_STAT'){
+		} catch (error) {
+			console.error("Error al parsear el payload:", error);
+		}
+	}
+
+	// Mensaje solicitando info desde front
+	async requestInfo(client: Socket, payload: any) {
+		if (payload.command === 'REQUEST_INFO'){
+			// Send waiting room when connected
+			this.wss.emit('server-game', {
+				command: 'WAITING_ROOM',
+				data: GlobalServiceGames.waiting_room,
+				timestamp:  Date.now() 
+			} );
+			// Send game list when connected
+			this.wss.emit('server-game', {
+				command: 'GAME_LIST',
+				data: GlobalServiceGames.games,
+				timestamp:  Date.now() 
+				} );	
+		}
+	}
+	// Update of the status changed of a player in the his game in gamelist(GlobalServiceGames.games)
+	async updatePlayerStatus(client: Socket, payload: any) {		
+		if (payload.command === 'UPDATE_PLAYER_STAT'){
 				for (let game of GlobalServiceGames.games){
 					if (game.game_id === payload.params.game_id){
 							if (payload.params.player_id === game.p1id) {
@@ -93,62 +132,67 @@ export class GameWsGateway {
 					}
 				}
 			}
-			// Update player position
-			if (payload.command === 'UPDATE_PLAYER_MOV'){
-					for (let game of GlobalServiceGames.games){
-						if (game.game_id === payload.params.game_id){
-								if (payload.params.player_id === game.p1id) {
-									game.p1y = payload.params.player_pos;
-									game.p1time = payload.timestamp
-									break
-								}
-								if (payload.params.player_id === game.p2id) {
-									game.p2y = payload.params.player_pos;
-									game.p2time = payload.timestamp
-									break
-								}	
-						}
-					}
-			}
-			// join waiting room
-			if (payload.command === 'JOIN_WAITING_ROOM'){
-				//Check if you are in a game --> notify ?
-				this.logger.log("Command Join Waiting Room Recieved")
-				GlobalServiceGames.waiting_room = payload.params
-				this.wss.emit('server-game', {
-					command: 'UPDATE_WAITING_ROOM',
-					data: GlobalServiceGames.waiting_room,
-					timestamp:  Date.now() 
-				} );
-			}
-			// join waiting room
-			if (payload.command === 'LEAVE_WAITING_ROOM'){
-				this.logger.log("Command Leave Waiting Room Recieved")
-				GlobalServiceGames.waiting_room = null
-				this.wss.emit('server-game', {
-					command: 'UPDATE_WAITING_ROOM',
-					data: GlobalServiceGames.waiting_room,
-					timestamp:  Date.now() 
-				} );
-			}
-			// created game from waiting room
-			if (payload.command === 'CREATED_WAITING_ROOM'){
-				//Check if you are in a game --> notify --> delete waiting room?
-				// created new game ---> notify to users
-				// Check if players yet in a game
-				let flag = 0
-				for (let game of GlobalServiceGames.games){
-					if ((game.p1id === payload.params.player_id_1) || (game.p2id === payload.params.player_id_1)){
-						flag = 1
+	}
+	// Update of the position changed of a player in the his game in gamelist(GlobalServiceGames.games)
+	async updatePlayerMove(client: Socket, payload: any) {
+		for (let game of GlobalServiceGames.games){
+			if (game.game_id === payload.params.game_id){
+					if (payload.params.player_id === game.p1id) {
+						game.p1y = payload.params.player_pos;
+						game.p1time = payload.timestamp
 						break
 					}
-					if ((game.p1id === payload.params.player_id_2) || (game.p2id === payload.params.player_id_2)){
-						flag = 2
+					if (payload.params.player_id === game.p2id) {
+						game.p2y = payload.params.player_pos;
+						game.p2time = payload.timestamp
 						break
-					}
-				}
-				// Flag === 0 both players are free to play
-				if (flag === 0){
+					}	
+			}
+		}
+	}
+	// A player join to the waiting room ---> send update to all
+	async joinWaitingRoom(client: Socket, payload: any) {
+		if (payload.command === 'JOIN_WAITING_ROOM'){
+			//Check if you are in a game --> notify ?
+			this.logger.log("Command Join Waiting Room Recieved")
+			GlobalServiceGames.waiting_room = payload.params
+			this.wss.emit('server-game', {
+				command: 'UPDATE_WAITING_ROOM',
+				data: GlobalServiceGames.waiting_room,
+				timestamp:  Date.now() 
+			} );
+		}
+	}
+	// the player in waiting room leave the waiting room ---> send update to all
+	async leaveWaitingRoom(client: Socket, payload: any) {
+		if (payload.command === 'LEAVE_WAITING_ROOM'){
+			this.logger.log("Command Leave Waiting Room Recieved")
+			GlobalServiceGames.waiting_room = null
+			this.wss.emit('server-game', {
+				command: 'UPDATE_WAITING_ROOM',
+				data: GlobalServiceGames.waiting_room,
+				timestamp:  Date.now() 
+			} );
+		}
+	}
+	// created a game from players in waiting room or from a challenge
+	async createWaitingRoom(client: Socket, payload: any) {
+		//Check if you are in a game --> notify --> delete waiting room?
+		// created new game ---> notify to users
+		// Check if players yet in a game
+		let flag = 0
+		for (let game of GlobalServiceGames.games){
+			if ((game.p1id === payload.params.player_id_1) || (game.p2id === payload.params.player_id_1)){
+				flag = 1
+				break
+			}
+			if ((game.p1id === payload.params.player_id_2) || (game.p2id === payload.params.player_id_2)){
+				flag = 2
+				break
+			}
+		}
+		// Flag === 0 both players are free to play
+		if (flag === 0){
 					let ang = Math.random()*(2) + -1
 					let c = GlobalServiceGames.game_cfg.time_wait
 					GlobalServiceGames.games.push( {
@@ -187,10 +231,10 @@ export class GameWsGateway {
 								}, 
 						timestamp:  Date.now()
 						 } );
-				}
+		}
 
-				// Flag === 1 player1 is in a game
-				if (flag === 1){
+		// Flag === 1 player1 is in a game ---> send to a player ------------------------
+		if (flag === 1){
 					// sent notify payload.params.player_id_1 esta un game
 					this.wss.emit('server-game', {
 						command: 'MSG',
@@ -202,9 +246,9 @@ export class GameWsGateway {
 						 } );
 					// erase waiting room
 					GlobalServiceGames.waiting_room = null
-				}
-				// Flag === 2 player2 is in a game
-				if (flag === 2){
+		}
+		// Flag === 2 player2 is in a game ---> send to a player ------------------------
+		if (flag === 2){
 					// sent notify payload.params.player_id_2 esta un game
 					this.wss.emit('server-game', {
 						command: 'MSG',
@@ -216,20 +260,91 @@ export class GameWsGateway {
 						 } );
 					// erase waiting room
 					GlobalServiceGames.waiting_room = null
-				}
-				// refresh waiting room
-				this.wss.emit('server-game', {
+		}
+		// refresh waiting room ----> to all
+		this.wss.emit('server-game', {
 					command: 'UPDATE_WAITING_ROOM',
 					data: GlobalServiceGames.waiting_room,
 					timestamp:  Date.now() 
-				} );
-			}	
-		} catch (error) {
-			console.error("Error al parsear el payload:", error);
-		}
+		} );
+	
 	}
+	// make a challenge 
+	async challengeAsk(client: Socket, payload: any) {
+		console.log("someone make a challenge:", payload)
+		// Check if player challenged is in a game
+		let flag = 0
+		for (let game of GlobalServiceGames.games){
+			if ((game.p1id === payload.params.player_id) || (game.p2id === payload.params.player_id)){
+				flag = 1
+				break
+			}
+			if ((game.p1id === payload.params.contact_id) || (game.p2id === payload.params.contact_id)){
+				flag = 2
+				break
+			}
+		}
+		// Flag === 1 player1 is in a game ---> send to a player ------------------------
+		if (flag === 1){
+					// sent notify payload.params.player_id_1 esta un game
+					this.wss.emit('server-game', {
+						command: 'MSG',
+						params: { player_id_1:payload.params.player_id,
+								  player_id_2:payload.params.contact_id,
+								  msg: "Imposible crear juego you are playing"
+								}, 
+						timestamp:  Date.now()
+						 } );
+		}
+		// Flag === 2 player2 is in a game ---> send to a player ------------------------
+		if (flag === 2){
+					// sent notify payload.params.player_id_2 esta un game
+					this.wss.emit('server-game', {
+						command: 'MSG',
+						params: { player_id_1:payload.params.player_id,
+								  player_id_2:payload.params.contact_id,
+								  msg: "Imposible crear reto " + payload.params.contact_nick + " está en otro juego."
+								}, 
+						timestamp:  Date.now()
+						 } );
+		}
+		if (flag === 0){
+			this.wss.emit('server-game', {
+				command: 'CHALLENGE_ASK',
+				params: { player_id_1:payload.params.player_id,
+						  player_id_1_nick:payload.params.player_nick,
+						  player_id_2:payload.params.contact_id,
+						  player_id_2_nick:payload.params.contact_nick,
+						}, 
+				timestamp:  Date.now()
+				 } );
+			console.log("se puede crear")
+		}
 
-	//Counter down to handle times out
+	}
+	async challengeAccept(client: Socket, payload: any) {
+		this.wss.emit('server-game', {
+			command: 'MSG',
+			params: { player_id_1:payload.params.player_id_1,
+					  player_id_2:payload.params.player_id_2,
+					  msg: "Reto aceptado go to game room"
+					}, 
+			timestamp:  Date.now()
+			 } );
+	}
+	async challengeDismiss(client: Socket, payload: any) {
+		console.log("challenge dismiss", payload)
+		this.wss.emit('server-game', {
+			command: 'MSG',
+			params: { player_id_1:payload.params.player_id_1,
+					  player_id_2:"payload.params.player_id_2",
+					  msg: "Reto No aceptado por " + payload.params.player_nick_2 
+					}, 
+			timestamp:  Date.now()
+			 } );
+	}
+		//------ intervals ----- 
+	//Counter down to handle times-out in phases
     @Interval(1000)
     handleCountdownInterval() {
 		for (let game of GlobalServiceGames.games){
@@ -246,12 +361,13 @@ export class GameWsGateway {
 						} 
 					} 
 					GlobalServiceGames.games = tmp_array
+					///-------------------------------------------------------
 					this.wss.emit('server-game', {
 						command: 'GAME_LIST',
 						data: GlobalServiceGames.games,
 						timestamp:  Date.now() 
 						 } );
-					//send  notificación  
+					//send  notificación  -----------------------------------
 					this.wss.emit('server-game', {
 						command: 'MSG',
 						params: { player_id_1:game.p1id,
@@ -320,7 +436,7 @@ export class GameWsGateway {
 						} 
 					} 
 					GlobalServiceGames.games = tmp_array
-					// Refresh game list
+					// Refresh game list --------------------> TODOS
 					this.wss.emit('server-game', {
 						command: 'GAME_LIST',
 						data: GlobalServiceGames.games,
@@ -329,7 +445,6 @@ export class GameWsGateway {
 				}
 		}
 	}
-
 	//Updating the games
     @Interval(60)
     handleUpdateInterval() {
