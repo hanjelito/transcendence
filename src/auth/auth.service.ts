@@ -31,7 +31,7 @@ export class AuthService {
 
     // Retorna el usuario logueado junto con su token JWT.
     return {
-      ...this.filterCreate(user),
+      // ...this.filterCreate(user),
       token: this.getJwtToken({ id: user.id }),
     };
   }
@@ -41,7 +41,7 @@ export class AuthService {
     const { email, name, lastName, login, password, image } = user;
 
     // Busca al usuario por su correo electrónico.
-    const userDB = await this.userRepository.findOne({
+    const userDB= await this.userRepository.findOne({
       where: { email },
       select: { email: true, password: true, id: true },
     });
@@ -60,14 +60,13 @@ export class AuthService {
       delete newUser.password;
       // // Retorna el usuario logueado junto con su token JWT.
       return {
-        ...newUser,
         token: this.getJwtToken({ id: newUser.id }),
       };
     }
 
     // Retorna el usuario logueado junto con su token JWT.
     return {
-      ...userDB,
+      // ...userDB,
       token: this.getJwtToken({ id: userDB.id }),
     };
   }
@@ -75,7 +74,7 @@ export class AuthService {
   // Método para verificar el estado de autenticación del usuario.
   async checkAuthStatus(user: User) {
     return {
-      ...this.filterCreate(user),
+      // ...this.filterCreate(user),
       token: this.getJwtToken({ id: user.id }),
     };
   }
@@ -110,7 +109,7 @@ export class AuthService {
 
       // Retorna el usuario creado junto con su token JWT.
       return {
-        ...this.filterCreate(user),
+        // ...this.filterCreate(user),
         token: this.getJwtToken({ id: user.id }),
       };
     } catch (error) {
