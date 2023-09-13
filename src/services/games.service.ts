@@ -72,7 +72,7 @@ export class GlobalServiceGames{
       pad:[5,100],
       ballrad: 5,
       game_vel: 20,
-      time_wait: 15,
+      time_wait: 20,
       time_start: 5,
       time_play: 60,
       time_show: 10,
