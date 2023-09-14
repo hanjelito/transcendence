@@ -4,6 +4,8 @@ import { ApiTags } from '@nestjs/swagger';
 import { Auth, ValidRoles } from '../auth/interfaces';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './entities/user.entity';
+import { GetUser } from 'src/auth/decorators';
 
 @ApiTags('User')
 @Auth(ValidRoles.admin)
@@ -26,9 +28,17 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @Patch('byid/:id')
+  updateById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.updateById(+id, updateUserDto);
+  }
+
+  @Patch()
+  update(
+    @Body() updateUserDto: UpdateUserDto,
+    @GetUser() user: User,
+  ) {
+    return this.userService.update(updateUserDto, user);
   }
 
   // @Delete(':id')

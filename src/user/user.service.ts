@@ -40,8 +40,22 @@ export class UserService {
     return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  updateById(id: number, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
+  }
+
+  async update(updateUserDto: UpdateUserDto, user: User) {
+    const foundUser = await this.userRepository.findOneBy({id: user.id});
+    
+    if (!foundUser) {
+        throw new NotFoundException(`User with ID ${user.id} not found`);
+    }
+    // Actualiza los campos necesarios
+    Object.assign(foundUser, updateUserDto);
+
+    // Guarda el usuario actualizado
+    const {password, isActive, ...rest} = await this.userRepository.save(foundUser);
+    return rest;
   }
 
   remove(id: number) {
