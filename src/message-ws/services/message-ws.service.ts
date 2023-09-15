@@ -24,7 +24,7 @@ interface Contacts {
 	id: string;
 	login: string;
 	name: string;
-	images: string[];
+	images: string;
 	blocked: boolean;
 }
 

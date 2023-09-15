@@ -54,7 +54,7 @@ export class AuthService {
         name,
         lastName,
         login,
-        images: [image.link],
+        images: image.link,
       });
 
       delete newUser.password;

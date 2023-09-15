@@ -53,16 +53,13 @@ export class User {
 
 	// Propiedad imagenes del usuario, de tipo texto.
 	@ApiProperty({
-		example: '[	"image1.jpg",	"image2.jpg",	"image3.jpg"]',
+		example: 'url image',
 		description: 'images of the user avatar',
 	})
 	@Column({
 		type: 'text',
-		array: true,
-		default: []
 	})
-	// Propiedad images del usuario, que es un array de tipo texto, con un valor predeterminado de [].
-	images: string[];
+	images: string;
 
 	@ApiProperty({
 		example: 'Password1234',

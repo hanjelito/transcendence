@@ -13,7 +13,6 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    
   )
   {}
 
@@ -56,6 +55,18 @@ export class UserService {
     // Guarda el usuario actualizado
     const {password, isActive, ...rest} = await this.userRepository.save(foundUser);
     return rest;
+  }
+
+  async updateUserImage(imagePath: string, user: User) {
+    const foundUser = await this.userRepository.findOneBy({id: user.id});
+    
+    if (!foundUser) {
+        throw new NotFoundException(`User with ID ${user.id} not found`);
+    }
+    // Actualiza el campo images del usuario
+    foundUser.images = imagePath;
+  
+    await this.userRepository.save(foundUser);
   }
 
   remove(id: number) {

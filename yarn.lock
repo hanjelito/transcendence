@@ -794,16 +794,16 @@
   resolved "https://registry.npmjs.org/@nestjs/passport/-/passport-9.0.3.tgz#4df0e6de3176e04a5770cb432e58f129c8e49f9e"
   integrity sha512-HplSJaimEAz1IOZEu+pdJHHJhQyBOPAYWXYHfAPQvRqWtw4FJF1VXl1Qtk9dcXQX1eKytDtH+qBzNQc19GWNEg==
 
-"@nestjs/platform-express@^10.0.3":
-  version "10.0.3"
-  resolved "https://registry.npmjs.org/@nestjs/platform-express/-/platform-express-10.0.3.tgz#51db75cba3acd43cd8b3238841c7ce2d3132c94b"
-  integrity sha512-8wA4Onhu6/dQrzTsg6n3pe1WbK9vWFPhagX10eGesX2YvgpVT4ccL0lbJbzGM2CY94RkaxBBW46Q3NJ6Bf566g==
+"@nestjs/platform-express@^10.2.5":
+  version "10.2.5"
+  resolved "https://registry.npmjs.org/@nestjs/platform-express/-/platform-express-10.2.5.tgz#95098a386828cd65bea4322f828e2425b518c819"
+  integrity sha512-BChjJfsVtsvds31rp5V7LwM2XEQaxkFKUE0TGSH91m95FRO65Fii5RH6atasmhZTIW+T8LR5LuI/MO7cgZOiVg==
   dependencies:
     body-parser "1.20.2"
     cors "2.8.5"
     express "4.18.2"
     multer "1.4.4-lts.1"
-    tslib "2.5.3"
+    tslib "2.6.2"
 
 "@nestjs/platform-socket.io@^10.0.3":
   version "10.0.3"
@@ -4038,6 +4038,19 @@ multer@1.4.4-lts.1:
     type-is "^1.6.4"
     xtend "^4.0.0"
 
+multer@^1.4.5-lts.1:
+  version "1.4.5-lts.1"
+  resolved "https://registry.npmjs.org/multer/-/multer-1.4.5-lts.1.tgz#803e24ad1984f58edffbc79f56e305aec5cfd1ac"
+  integrity sha512-ywPWvcDMeH+z9gQq5qYHCCy+ethsk4goepZ45GLD63fOu0YcNecQxi64nDs3qluZB+murG3/D4dJ7+dGctcCQQ==
+  dependencies:
+    append-field "^1.0.0"
+    busboy "^1.0.0"
+    concat-stream "^1.5.2"
+    mkdirp "^0.5.4"
+    object-assign "^4.1.1"
+    type-is "^1.6.4"
+    xtend "^4.0.0"
+
 mute-stream@0.0.8:
   version "0.0.8"
   resolved "https://registry.npmjs.org/mute-stream/-/mute-stream-0.0.8.tgz#1630c42b2251ff81e2a283de96a5497ea92e5e0d"
@@ -5279,6 +5292,11 @@ tslib@2.5.3:
   version "2.5.3"
   resolved "https://registry.npmjs.org/tslib/-/tslib-2.5.3.tgz#24944ba2d990940e6e982c4bea147aba80209913"
   integrity sha512-mSxlJJwl3BMEQCUNnxXBU9jP4JBktcEGhURcPR6VQVlnP0FdDEsIaz0C35dXNGLyRfrATNofF0F5p2KPxQgB+w==
+
+tslib@2.6.2:
+  version "2.6.2"
+  resolved "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz#703ac29425e7b37cd6fd456e92404d46d1f3e4ae"
+  integrity sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==
 
 tslib@^1.8.1, tslib@^1.9.0:
   version "1.14.1"
