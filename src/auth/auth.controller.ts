@@ -1,21 +1,17 @@
-import { Controller, Get, Post, Body, UseGuards, Req, Headers, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
-import { IncomingHttpHeaders } from 'http';
+import { Request, Response } from 'express';
 
 import { CreateUserDto, LoginUserDto } from './dto/';
 import { AuthService } from './auth.service';
 import { User } from '../user/entities/user.entity';
-import { GetUser, RawHeaders } from './decorators/';
-import { UserRoleGuard } from './guards/user-role.guard';
-import { RoleProtected } from './decorators/role-protected.decorator';
-import { Auth, ValidRoles } from './interfaces';
+import { GetUser } from './decorators/';
+
+import { Auth } from './interfaces';
 
 
-// AuthController es el controlador encargado de gestionar
-// las acciones relacionadas con la autenticación.
 @ApiTags('Login Authentication')
 @Controller('auth')
 export class AuthController {
@@ -45,69 +41,51 @@ export class AuthController {
     return this.authService.checkAuthStatus(user);
   }
 
-  /**
-   * Ejemplo de rutas privadas con diferentes decoradores y guardias.
-   */
-  // // Ruta privada de prueba con diferentes decoradores y guardias.
-  // @Get('private')
-  // @UseGuards(AuthGuard())
-  // testingPrivateRoute(
-  //   @GetUser() user: User,
-  //   @GetUser('email') userEmail: string,
-  //   @RawHeaders() rawHeaders: string[],
-  //   @Headers() headers: IncomingHttpHeaders,
-  // ) {
-  //   return {
-  //     ok: true,
-  //     message: 'This is a private route',
-  //     user,
-  //     userEmail,
-  //     rawHeaders,
-  //     headers,
-  //   };
-  // }
-
-  // // Ruta privada de prueba con protección de roles.
-  // @Get('private2')
-  // @RoleProtected(ValidRoles.superUser, ValidRoles.admin, ValidRoles.user)
-  // @UseGuards(AuthGuard(), UserRoleGuard)
-  // privateRoute2(@GetUser() user: User) {
-  //   return {
-  //     ok: true,
-  //     user,
-  //   };
-  // }
-
-  // // Ruta privada de prueba con protección de roles utilizando el decorador Auth().
-  // @Get('private3')
-  // @Auth(ValidRoles.admin)
-  // privateRoute3(@GetUser() user: User) {
-  //   return {
-  //     ok: true,
-  //     user,
-  //   };
-  // }
-  //
   
   @Get('42')
   @UseGuards(AuthGuard('42'))
   fortyTwoLogin() {
     // Inicia el proceso de autenticación con 42
   }
+  
+  // @Get('42/callback')
+  // @UseGuards(AuthGuard('42'))
+  // fortyTwoCallback(@Req() req: Request) {
+  //   console.log('test callback controller');
+  //   const user = req.user;
+  //   const jwt: any = this.authService.loginOrCreateWith42(user);
+  //   return jwt;
+  // }
 
   @Get('42/callback')
   @UseGuards(AuthGuard('42'))
-  fortyTwoCallback(@Req() req: Request) {
+  fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
+    console.log('test callback controller');
     const user = req.user;
-    const jwt: any = this.authService.loginOrCreateWith42(user);
-    return jwt;
-  }
-}
+    this.authService.loginOrCreateWith42(user).then(jwt => {
+      console.log(jwt.token);
 
-/**
- Este archivo define el controlador de autenticación, el cual contiene las rutas
- para registrar e iniciar sesión de los usuarios, verificar el estado de
- autenticación y algunas rutas de prueba privadas con protección de roles y
- guardias. Utiliza decoradores personalizados para extraer información del
- usuario y las cabeceras HTTP de las solicitudes.
- */
+      // Establecer el token en una cookie HTTP segura.
+      res.cookie('auth_token', jwt.token, {
+        httpOnly: true,
+        secure: true, // Utiliza esto sólo en producción con HTTPS
+        // ... otros parámetros de configuración de la cookie si es necesario
+      });
+
+      // Redirige al usuario.
+      return res.redirect('http://localhost:8080/dashboard');
+    });
+  }
+
+  // @Get('42/callback')
+  // @UseGuards(AuthGuard('42'))
+  // fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
+  //   console.log('test callback controller');
+  //   const user = req.user;
+  //   const jwt: any = this.authService.loginOrCreateWith42(user);
+  //   return jwt;
+
+  //   // Redirige al usuario de vuelta al frontend con el token.
+  //   return res.redirect(`http://localhost:8080/?token=${jwt}`);
+  // }
+}

@@ -38,6 +38,7 @@ export class AuthService {
 
   //login with 42 or create user
   async loginOrCreateWith42( user: any ) {
+    console.log('test back');
     const { email, name, lastName, login, password, image } = user;
 
     // Busca al usuario por su correo electrónico.
