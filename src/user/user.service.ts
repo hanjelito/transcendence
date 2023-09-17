@@ -31,7 +31,7 @@ export class UserService {
   async findOne(identifier: string) {
     let user: User;
     if (isUUID(identifier))
-      user = await this.userRepository.findOneBy( {id: identifier} );
+    user = await this.userRepository.findOne({ where: { id: identifier } });
     
     if (!user) {
         throw new NotFoundException(`User with id	${ identifier } not found`);
@@ -39,12 +39,21 @@ export class UserService {
     return user;
   }
 
+  async saveUserTwoFASecret(userId: string, secret: string): Promise<void> {
+    const user = await this.userRepository.findOne({where: {id: userId}});
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    user.twoFASecret = secret;
+    await this.userRepository.save(user);
+  }
+
   updateById(id: number, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
   }
 
   async update(updateUserDto: UpdateUserDto, user: User) {
-    const foundUser = await this.userRepository.findOneBy({id: user.id});
+    const foundUser = await this.userRepository.findOne({ where: { id: user.id } });
     
     if (!foundUser) {
         throw new NotFoundException(`User with ID ${user.id} not found`);
@@ -58,7 +67,7 @@ export class UserService {
   }
 
   async updateUserImage(imagePath: string, user: User) {
-    const foundUser = await this.userRepository.findOneBy({id: user.id});
+    const foundUser = await this.userRepository.findOne({ where: { id: user.id } });
     
     if (!foundUser) {
         throw new NotFoundException(`User with ID ${user.id} not found`);

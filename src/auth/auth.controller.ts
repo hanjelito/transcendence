@@ -11,6 +11,10 @@ import { GetUser } from './decorators/';
 
 import { Auth } from './interfaces';
 
+interface ResponseMessage {
+  status: string;
+  message: string;
+}
 
 @ApiTags('Login Authentication')
 @Controller('auth')
@@ -57,35 +61,66 @@ export class AuthController {
   //   return jwt;
   // }
 
-  @Get('42/callback')
-  @UseGuards(AuthGuard('42'))
-  fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
-    console.log('test callback controller');
-    const user = req.user;
-    this.authService.loginOrCreateWith42(user).then(jwt => {
-      console.log(jwt.token);
-
-      // Establecer el token en una cookie HTTP segura.
-      res.cookie('auth_token', jwt.token, {
-        httpOnly: true,
-        secure: true, // Utiliza esto sólo en producción con HTTPS
-        // ... otros parámetros de configuración de la cookie si es necesario
-      });
-
-      // Redirige al usuario.
-      return res.redirect('http://localhost:8080/dashboard');
-    });
-  }
-
   // @Get('42/callback')
   // @UseGuards(AuthGuard('42'))
   // fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
   //   console.log('test callback controller');
   //   const user = req.user;
-  //   const jwt: any = this.authService.loginOrCreateWith42(user);
-  //   return jwt;
+  //   this.authService.loginOrCreateWith42(user).then(jwt => {
+  //     console.log(jwt.token);
 
-  //   // Redirige al usuario de vuelta al frontend con el token.
-  //   return res.redirect(`http://localhost:8080/?token=${jwt}`);
+  //     // Establecer el token en una cookie HTTP segura.
+  //     res.cookie('auth_token', jwt.token, {
+  //       httpOnly: true,
+  //       secure: true, // Utiliza esto sólo en producción con HTTPS
+  //       // ... otros parámetros de configuración de la cookie si es necesario
+  //     });
+
+  //     // Redirige al usuario.
+  //     return res.redirect('http://localhost:8080/callback');
+  //   });
   // }
+
+  @Get('42/callback')
+  @UseGuards(AuthGuard('42'))
+  fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
+      console.log('test callback controller');
+      const user = req.user;
+      this.authService.loginOrCreateWith42(user).then(jwt => {
+          return res.redirect(`http://localhost:8080/callback?token=${jwt.token}`);
+      });
+  }
+
+  @Get('generate-2fa')
+  async generateTwoFA() {
+    return this.authService.generateTwoFA();
+  }
+
+  @Post('validate-2fa')
+  validateTwoFA(@Body('secret') secret: string, @Body('token') token: string) {
+    return {
+      isValid: this.authService.validateTwoFAToken(secret, token)
+    };
+  }
+
+  @Post('enable-2fa')
+  async enableTwoFA(
+    user: User,
+    @Body('secret') secret: string,
+    @Body('token') token: string
+  ): Promise<ResponseMessage> {
+    const isValid = this.authService.validateTwoFAToken(secret, token);
+    if (isValid) {
+      await this.authService.saveTwoFASecret(user.id, secret);
+      return { status: 'success', message: '2FA enabled successfully' };
+    } else {
+      throw new Error('Invalid token');
+    }
+  }
+
+  @Post('disable-2fa')
+  async disableTwoFA(user: User): Promise<ResponseMessage> {
+    await this.authService.disableTwoFA(user.id);
+    return { status: 'success', message: '2FA disabled successfully' };
+  }
 }

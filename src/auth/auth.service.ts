@@ -3,10 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
 
 import { LoginUserDto, CreateUserDto } from './dto';
 import { User } from '../user/entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+
 
 @Injectable()
 export class AuthService {
@@ -155,12 +158,35 @@ export class AuthService {
     const {isActive, roles, password, ...newUser} = user;
     return { ...newUser };
   }
+
+  async generateTwoFA(): Promise<{ secret: string; QRCodeURL: string }> {
+    const secret = speakeasy.generateSecret({ length: 20 });
+    const QRCodeURL = await qrcode.toDataURL(secret.otpauth_url);
+
+    return {
+      secret: secret.base32,
+      QRCodeURL
+    };
+  }
+
+  validateTwoFAToken(userSecret: string, userToken: string): boolean {
+    return speakeasy.totp.verify({
+      secret: userSecret,
+      encoding: 'base32',
+      token: userToken,
+    });
+  }
+
+  async saveTwoFASecret(userId: string, secret: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: {id: userId} } );
+    user.twoFASecret = secret;
+    return this.userRepository.save(user);
+  }
+
+  async disableTwoFA(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne( {where: {id: userId} });
+    user.twoFASecret = null;
+    return this.userRepository.save(user);
+  }
 }
 
-/**
-Este archivo define el servicio de autenticación, que contiene métodos
-para crear nuevos usuarios, iniciar sesión y verificar el estado de
-autenticación de un usuario. También incluye funciones para generar
-tokens JWT y manejar errores de base de datos. Utiliza bcrypt para encriptar
-las contraseñas de los usuarios.
- */

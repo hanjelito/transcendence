@@ -116,6 +116,14 @@ export class User {
 	// Propiedad roles del usuario, que es un array de tipo texto, con un valor predeterminado de ['user'].
 	roles: string[];
 
+	//
+	@Column({
+		nullable: true
+	})
+	twoFASecret: string;
+	//
+
+
 	@ApiProperty()
 	@OneToMany(
 		() => Chat,
