@@ -51,35 +51,7 @@ export class AuthController {
   fortyTwoLogin() {
     // Inicia el proceso de autenticación con 42
   }
-  
-  // @Get('42/callback')
-  // @UseGuards(AuthGuard('42'))
-  // fortyTwoCallback(@Req() req: Request) {
-  //   console.log('test callback controller');
-  //   const user = req.user;
-  //   const jwt: any = this.authService.loginOrCreateWith42(user);
-  //   return jwt;
-  // }
 
-  // @Get('42/callback')
-  // @UseGuards(AuthGuard('42'))
-  // fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
-  //   console.log('test callback controller');
-  //   const user = req.user;
-  //   this.authService.loginOrCreateWith42(user).then(jwt => {
-  //     console.log(jwt.token);
-
-  //     // Establecer el token en una cookie HTTP segura.
-  //     res.cookie('auth_token', jwt.token, {
-  //       httpOnly: true,
-  //       secure: true, // Utiliza esto sólo en producción con HTTPS
-  //       // ... otros parámetros de configuración de la cookie si es necesario
-  //     });
-
-  //     // Redirige al usuario.
-  //     return res.redirect('http://localhost:8080/callback');
-  //   });
-  // }
 
   @Get('42/callback')
   @UseGuards(AuthGuard('42'))
