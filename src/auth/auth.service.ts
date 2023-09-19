@@ -155,11 +155,3 @@ export class AuthService {
     return { ...newUser };
   }
 }
-
-/**
-Este archivo define el servicio de autenticación, que contiene métodos
-para crear nuevos usuarios, iniciar sesión y verificar el estado de
-autenticación de un usuario. También incluye funciones para generar
-tokens JWT y manejar errores de base de datos. Utiliza bcrypt para encriptar
-las contraseñas de los usuarios.
- */
