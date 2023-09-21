@@ -35,6 +35,7 @@ export class AuthService {
     // Retorna el usuario logueado junto con su token JWT.
     return {
       // ...this.filterCreate(user),
+      authentication: user.hasTwoFASecret,
       token: this.getJwtToken({ id: user.id }),
     };
   }

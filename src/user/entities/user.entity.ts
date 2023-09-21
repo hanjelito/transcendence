@@ -1,8 +1,6 @@
 import {
 	BeforeInsert, BeforeUpdate,
 	Column, Entity,
-	JoinColumn,
-	ManyToOne,
 	OneToMany, PrimaryGeneratedColumn
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
@@ -121,6 +119,10 @@ export class User {
 		nullable: true
 	})
 	twoFASecret: string;
+
+	get hasTwoFASecret(): boolean {
+        return !!this.twoFASecret;
+    }
 	//
 
 

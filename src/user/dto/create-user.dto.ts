@@ -67,11 +67,8 @@ export class CreateUserDto {
 	@MaxLength(10)
 	// Propiedad user del usuario que debe ser una cadena de caracteres con una longitud mínima de 5 caracteres y maximo 10.
 	login: string;
-}
 
-/**
-Este archivo define la clase CreateUserDto, que se utiliza para validar los datos
-del usuario al registrarse. La clase contiene las propiedades email, password,
-name y lastName, que deben ser cadenas de caracteres y cumplir con las restricciones
-de validación definidas en cada una de ellas.
-*/
+	@IsString()
+	@MaxLength(35)
+	twoFASecret: string;
+}

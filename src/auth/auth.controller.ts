@@ -9,7 +9,7 @@ import { AuthService } from './auth.service';
 import { User } from '../user/entities/user.entity';
 import { GetUser } from './decorators/';
 
-import { Auth } from './interfaces';
+import { Auth, ValidRoles } from './interfaces';
 
 interface ResponseMessage {
   status: string;
@@ -23,8 +23,6 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService
   ) {}
-
-  
 
   // Ruta de registro de nuevos usuarios.
   @Post('register')
@@ -56,7 +54,6 @@ export class AuthController {
   @Get('42/callback')
   @UseGuards(AuthGuard('42'))
   fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
-      console.log('test callback controller');
       const user = req.user;
       this.authService.loginOrCreateWith42(user).then(jwt => {
           return res.redirect(`http://localhost:8080/callback?token=${jwt.token}`);
@@ -76,17 +73,21 @@ export class AuthController {
   }
 
   @Post('enable-2fa')
+  @Auth(ValidRoles.user)
   async enableTwoFA(
-    user: User,
-    @Body('secret') secret: string,
-    @Body('token') token: string
-  ): Promise<ResponseMessage> {
+    @Req() req: any, 
+    @GetUser() user: User,
+    @Res() res: Response
+  ): Promise<Response> {
+    const secret = req.body.secret;
+    const token = req.body.token;
+
     const isValid = this.authService.validateTwoFAToken(secret, token);
     if (isValid) {
       await this.authService.saveTwoFASecret(user.id, secret);
-      return { status: 'success', message: '2FA enabled successfully' };
+      return res.status(200).json({ status: 'success', message: '2FA enabled successfully' });
     } else {
-      throw new Error('Invalid token');
+      return res.status(400).json({ status: 'error', message: 'Invalid token' });
     }
   }
 
