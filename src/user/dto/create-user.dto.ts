@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 
 // Clase CreateUserDto para la validación de los datos del usuario al registrarse.
 export class CreateUserDto {
@@ -68,7 +68,12 @@ export class CreateUserDto {
 	// Propiedad user del usuario que debe ser una cadena de caracteres con una longitud mínima de 5 caracteres y maximo 10.
 	login: string;
 
-	@IsString()
-	@MaxLength(35)
-	twoFASecret: string;
+	// @ApiProperty({
+	// 	description: 'uploads/noiamge.jpg',
+	// 	maxLength: 200,
+	// })
+	// @IsString()
+	// @IsOptional()
+	// @MaxLength(200)
+	// images: string;
 }

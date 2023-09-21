@@ -34,6 +34,11 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
+  @Get('2f/:id')
+  findOne2F(@Param('id') id: string) {
+    return this.userService.findOne2F(id);
+  }
+
   @Patch('byid/:id')
   @Auth(ValidRoles.user)
   updateById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {

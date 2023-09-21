@@ -29,14 +29,27 @@ export class UserService {
   }
 
   async findOne(identifier: string) {
-    let user: User;
-    if (isUUID(identifier))
-    user = await this.userRepository.findOne({ where: { id: identifier } });
-    
+    if (!isUUID(identifier))
+      throw new NotFoundException(`The id	${ identifier } is no UUID`);
+
+    const user = await this.userRepository.findOne({ where: { id: identifier } });
+    // console.log('user:',  user.hasTwoFASecret);
     if (!user) {
         throw new NotFoundException(`User with id	${ identifier } not found`);
     }
     return user;
+  }
+
+  async findOne2F(identifier: string) {
+    if (!isUUID(identifier))
+      throw new NotFoundException(`The id	${ identifier } is no UUID`);
+
+    const user = await this.userRepository.findOne({ where: { id: identifier } });
+    // console.log('user:',  user.hasTwoFASecret);
+    if (!user) {
+        throw new NotFoundException(`User with id	${ identifier } not found`);
+    }
+    return  user.hasTwoFASecret;
   }
 
   async saveUserTwoFASecret(userId: string, secret: string): Promise<void> {

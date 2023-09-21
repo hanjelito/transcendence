@@ -56,6 +56,7 @@ export class User {
 	})
 	@Column({
 		type: 'text',
+		default: 'uploads/noiamge.jpg',
 	})
 	images: string;
 
@@ -116,7 +117,7 @@ export class User {
 
 	//
 	@Column({
-		nullable: true
+		nullable: true,
 	})
 	twoFASecret: string;
 
@@ -124,8 +125,6 @@ export class User {
         return !!this.twoFASecret;
     }
 	//
-
-
 	@ApiProperty()
 	@OneToMany(
 		() => Chat,

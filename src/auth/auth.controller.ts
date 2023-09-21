@@ -56,7 +56,7 @@ export class AuthController {
   fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
       const user = req.user;
       this.authService.loginOrCreateWith42(user).then(jwt => {
-          return res.redirect(`http://localhost:8080/callback?token=${jwt.token}`);
+          return res.redirect(`http://localhost:8080?token=${jwt.token}`);
       });
   }
 
