@@ -72,6 +72,23 @@ export class AuthController {
     };
   }
 
+  @Post('validate-2fa-login')
+  @Auth(ValidRoles.user)
+  async validateTwoFALogin(
+    @Req() req: any, 
+    @GetUser() user: User,
+    @Res() res: Response
+  ) : Promise<Response> {
+
+    const token = req.body.token;
+    const isValid = this.authService.validateTwoFAToken(user.twoFASecret, token);
+    if (isValid) {
+      return res.status(200).json({ status: 'success', message: '2FA enabled successfully' });
+    } else {
+      return res.status(400).json({ status: 'error', message: 'Invalid token' });
+    }
+  }
+
   @Post('enable-2fa')
   @Auth(ValidRoles.user)
   async enableTwoFA(
@@ -90,6 +107,7 @@ export class AuthController {
       return res.status(400).json({ status: 'error', message: 'Invalid token' });
     }
   }
+  
 
   @Post('disable-2fa')
   async disableTwoFA(user: User): Promise<ResponseMessage> {
