@@ -93,22 +93,24 @@ export class ChatService {
 		
 			// Verificar si el chat ya existe
 			let existingChat = await this.chatRepository.findOne({ where: { name: chatDetails.name } });
-			console.log(existingChat);
+			
 			const chatUser = new CreateChatUserDto();
-			let chat;
+
 			if (existingChat) {
-			if(existingChat.password != createChatDto.password )
-				throw new NotFoundException(`Chat	${existingChat.name} have a password is not similar`);
-			chatUser.chatId = existingChat.id;
+				if(existingChat.password != createChatDto.password )
+				throw new CustomHttpException('', false, `Chat	${existingChat.name} have a password is not similar`, HttpStatus.BAD_REQUEST);
+					// throw new NotFoundException(`Chat	${existingChat.name} have a password is not similar`);
+				chatUser.chatId = existingChat.id;
 			} else {
 				// Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
-				chat = new Chat();
+				const chat = new Chat();
 				Object.assign(chat, chatDetails);
 				chat.user = user;
 
 				// Guardar la instancia de Chat en la base de datos
 				const chatBD : Chat = await this.chatRepository.save(chat);
 				chatUser.chatId = chatBD.id;
+				chatUser.rol = 'admin'
 				existingChat = chatBD;
 			}
 

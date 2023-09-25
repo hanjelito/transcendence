@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
@@ -34,4 +34,18 @@ export class ChatUser
 		{ eager: true },
 	)
 	user: User;
+
+	@ApiProperty({
+        example: 'user',
+        description: 'Role of the user (e.g., moderator, user, etc.)',
+    })
+    @Column({ type: 'varchar', default: 'user' })
+    rol: string;
+
+	@ApiProperty({
+        example: '2023-09-24T12:34:56.000Z',
+        description: 'Creation date',
+    })
+    @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+    created_at: Date;
 }

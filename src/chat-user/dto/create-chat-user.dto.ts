@@ -14,4 +14,9 @@ export class CreateChatUserDto {
 	})
   @IsNotEmpty()
   chatId: string;
+
+  @ApiProperty({
+		description: 'Id of the chat',
+	})
+  rol: string;
 }

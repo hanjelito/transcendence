@@ -33,7 +33,7 @@ export class ChatController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 403, description: 'Forbidden, Token related' })
   create(
-    @Body() createChatDto: CreateChatDto,
+    @Body() createChatDto: any,
     @GetUser() user: User,
   ) {
     return this.chatService.create(createChatDto, user);

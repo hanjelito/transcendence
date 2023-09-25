@@ -30,9 +30,9 @@ export class ChatUserService {
 	async create(createChatUserDto: CreateChatUserDto, user: User) {
 		try {
 			const { chatId, ...chatUserDetails } = createChatUserDto;
-		
+			
 			if (!isUUID(chatId))
-				throw new NotFoundException(`Chat with id ${chatId} not founds`);
+			throw new NotFoundException(`Chat with id ${chatId} not founds`);
 		
 			const chat = await this.chatRepository.findOneBy({ id: chatId });
 		
