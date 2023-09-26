@@ -68,6 +68,14 @@ export class CreateUserDto {
 	// Propiedad user del usuario que debe ser una cadena de caracteres con una longitud mínima de 5 caracteres y maximo 10.
 	login: string;
 
+	@ApiProperty({
+		description: 'First connection',
+	})
+	@IsBoolean()
+	// Propiedad user del usuario que debe ser una cadena de caracteres con una longitud mínima de 5 caracteres y maximo 10.
+	first_time: boolean;
+
+
 	// @ApiProperty({
 	// 	description: 'uploads/noiamge.jpg',
 	// 	maxLength: 200,

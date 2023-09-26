@@ -55,21 +55,24 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	}
 	// Método que se ejecuta cuando un cliente se desconecta.
 	async handleDisconnect(client: Socket) {
-		const IdUUID = this.socketManagerService.getUserIdBySocketId(client.id);
-		const contacts: Contacts[] = await this.messageWsService.getContactById(IdUUID);
-		this.socketManagerService.unregisterClient(client);
+		try {
+			const IdUUID = this.socketManagerService.getUserIdBySocketId(client.id);
+			const contacts: Contacts[] = await this.messageWsService.getContactById(IdUUID);
+			this.socketManagerService.unregisterClient(client);
 
-		if ((this.socketManagerService.getClients(IdUUID)).length > 0)
-			return ;
-		this.myContactOnline(contacts).then(transformedContactsOnline => {
-			transformedContactsOnline.forEach(contact => {
-				const contactSockets = this.socketManagerService.getClients(contact.id);
-				contactSockets.forEach(socketId => {
-					this.wss.to(socketId).emit('disconnect-contact-server', IdUUID);
+			if ((this.socketManagerService.getClients(IdUUID)).length > 0)
+				return ;
+			this.myContactOnline(contacts).then(transformedContactsOnline => {
+				transformedContactsOnline.forEach(contact => {
+					const contactSockets = this.socketManagerService.getClients(contact.id);
+					contactSockets.forEach(socketId => {
+						this.wss.to(socketId).emit('disconnect-contact-server', IdUUID);
+					});
 				});
 			});
-		});
-		
+		} catch (error) {
+			console.error("Error handling disconnect:", error);
+		}
 	}
 
 	// regitra los ids logueados a un map

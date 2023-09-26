@@ -49,6 +49,17 @@ export class User {
 	})
 	login: string;
 
+	//
+	@ApiProperty({
+		example: 'first time',
+		description: 'first connection',
+	})
+	@Column({
+		type: 'boolean',
+		default: false,
+	})
+	first_time: boolean;
+
 	// Propiedad imagenes del usuario, de tipo texto.
 	@ApiProperty({
 		example: 'url image',
@@ -56,7 +67,7 @@ export class User {
 	})
 	@Column({
 		type: 'text',
-		default: 'uploads/noiamge.jpg',
+		default: 'uploads/default.png',
 	})
 	images: string;
 

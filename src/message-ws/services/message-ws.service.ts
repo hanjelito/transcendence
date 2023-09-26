@@ -118,7 +118,7 @@ export class MessageWsService {
 			}
 			return [];
 		} catch (error) {
-			throw new error;
+			throw error;
 		}
 	}
 }
