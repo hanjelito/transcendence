@@ -37,6 +37,11 @@ export class ChatUserController {
     return this.chatUserService.findOneChatUserByIdentifier(identifier);
   }
 
+  @Get('find-chatsid-detail-user/:identifier')
+  findOneChatUserByIdentifierDetail(@Param('identifier') identifier: string) {
+    return this.chatUserService.findOneChatUserByIdentifierDetail(identifier);
+  }
+
   @Get('find-to-idchat/:identifier')
   findOneByIdentifier(@Param('identifier') identifier: string) {
     return this.chatUserService.findAllChatsByUserId(identifier);

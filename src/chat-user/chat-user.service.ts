@@ -99,6 +99,7 @@ export class ChatUserService {
 			.where('chat.id = :chatId', { chatId: identifier })
 			.getRawMany();
 			
+			
 			if (!chatUsers) {
 				throw new NotFoundException(`Chat with id	${ identifier } not found`);
 			}
@@ -109,6 +110,38 @@ export class ChatUserService {
 		}
 		return null;
 	}
+
+	async findOneChatUserByIdentifierDetail(identifier: string): Promise<any[]> {
+		if (isUUID(identifier)) {
+			const chatUsers: ChatUser[] = await this.chatUsersRepository.find({
+			where: {
+				chat: { id: identifier }
+			},
+			select: ['chat', 'user']
+			});
+			
+			if (chatUsers.length === 0) {
+			throw new NotFoundException(`Chat with id ${identifier} not found`);
+			}
+		
+			const chatUserDAta = chatUsers.map(chatUser => ({
+			id: chatUser.id,
+			rol: chatUser.rol,
+			created_at: chatUser.created_at,
+			user: {
+				id: chatUser.user.id,
+				login: chatUser.user.login,
+				roles: chatUser.user.roles,
+				images: chatUser.user.images
+			}
+			}));
+			const chatUsersArray = Object.values(chatUserDAta);
+			return {
+				...chatUsersArray
+			};
+		}
+		return [];
+	  }
 
 	async findAllChatsByUserId(identifier: string)
 	{
