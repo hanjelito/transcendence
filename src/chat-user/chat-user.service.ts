@@ -130,6 +130,7 @@ export class ChatUserService {
 			created_at: chatUser.created_at,
 			user: {
 				id: chatUser.user.id,
+				name: chatUser.user.name,
 				login: chatUser.user.login,
 				roles: chatUser.user.roles,
 				images: chatUser.user.images

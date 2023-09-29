@@ -53,6 +53,10 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	// Método que se ejecuta cuando un cliente se conecta.
 	async handleConnection(client: Socket) {
 	}
+
+	async handleReConnection(client: Socket) {
+		
+	}
 	// Método que se ejecuta cuando un cliente se desconecta.
 	async handleDisconnect(client: Socket) {
 		try {
@@ -78,6 +82,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	// regitra los ids logueados a un map
 	@SubscribeMessage('client-register')
 	async handleRegisterId(client: Socket, data: any): Promise<any>  {
+		this.wss.emit('connect-total', client.id);
 		// console.log('handleRegisterId:', client.id);
 		// Extraer el token JWT del encabezado del mensaje de conexión.
 		let payload: JwtPayload;
@@ -118,13 +123,14 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			this.wss.to(idSocket).emit('my-contact-server', transformedContactsOnline);
 		});
 
-		if (idSockets.length === 1)
+		if (idSockets.length === 1){
 			contacts.forEach(async (contact) => {
 				const contactSockets = this.socketManagerService.getClients(contact.id);
 				contactSockets.forEach(socketId => {
 					this.wss.to(socketId).emit('connect-contact-server', idUser);
 				});
 			});
+		}
 	}
 	//
 	async myContactOnline(contacts: Contacts[]): Promise<Contacts[]> {
