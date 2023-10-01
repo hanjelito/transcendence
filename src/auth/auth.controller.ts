@@ -1,21 +1,21 @@
-import { Controller, Get, Post, Body, UseGuards, Req, Headers, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
-import { IncomingHttpHeaders } from 'http';
+import { Request, Response } from 'express';
 
 import { CreateUserDto, LoginUserDto } from './dto/';
 import { AuthService } from './auth.service';
 import { User } from '../user/entities/user.entity';
-import { GetUser, RawHeaders } from './decorators/';
-import { UserRoleGuard } from './guards/user-role.guard';
-import { RoleProtected } from './decorators/role-protected.decorator';
+import { GetUser } from './decorators/';
+
 import { Auth, ValidRoles } from './interfaces';
 
+interface ResponseMessage {
+  status: string;
+  message: string;
+}
 
-// AuthController es el controlador encargado de gestionar
-// las acciones relacionadas con la autenticación.
 @ApiTags('Login Authentication')
 @Controller('auth')
 export class AuthController {
@@ -23,8 +23,6 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService
   ) {}
-
-  
 
   // Ruta de registro de nuevos usuarios.
   @Post('register')
@@ -45,49 +43,6 @@ export class AuthController {
     return this.authService.checkAuthStatus(user);
   }
 
-  /**
-   * Ejemplo de rutas privadas con diferentes decoradores y guardias.
-   */
-  // // Ruta privada de prueba con diferentes decoradores y guardias.
-  // @Get('private')
-  // @UseGuards(AuthGuard())
-  // testingPrivateRoute(
-  //   @GetUser() user: User,
-  //   @GetUser('email') userEmail: string,
-  //   @RawHeaders() rawHeaders: string[],
-  //   @Headers() headers: IncomingHttpHeaders,
-  // ) {
-  //   return {
-  //     ok: true,
-  //     message: 'This is a private route',
-  //     user,
-  //     userEmail,
-  //     rawHeaders,
-  //     headers,
-  //   };
-  // }
-
-  // // Ruta privada de prueba con protección de roles.
-  // @Get('private2')
-  // @RoleProtected(ValidRoles.superUser, ValidRoles.admin, ValidRoles.user)
-  // @UseGuards(AuthGuard(), UserRoleGuard)
-  // privateRoute2(@GetUser() user: User) {
-  //   return {
-  //     ok: true,
-  //     user,
-  //   };
-  // }
-
-  // // Ruta privada de prueba con protección de roles utilizando el decorador Auth().
-  // @Get('private3')
-  // @Auth(ValidRoles.admin)
-  // privateRoute3(@GetUser() user: User) {
-  //   return {
-  //     ok: true,
-  //     user,
-  //   };
-  // }
-  //
   
   @Get('42')
   @UseGuards(AuthGuard('42'))
@@ -95,19 +50,68 @@ export class AuthController {
     // Inicia el proceso de autenticación con 42
   }
 
+
   @Get('42/callback')
   @UseGuards(AuthGuard('42'))
-  fortyTwoCallback(@Req() req: Request) {
-    const user = req.user;
-    const jwt: any = this.authService.loginOrCreateWith42(user);
-    return jwt;
+  fortyTwoCallback(@Req() req: Request, @Res() res: Response) {
+      const user = req.user;
+      this.authService.loginOrCreateWith42(user).then(jwt => {
+          return res.redirect(`http://localhost:8080?token=${jwt.token}`);
+      });
+  }
+
+  @Get('generate-2fa')
+  async generateTwoFA() {
+    return this.authService.generateTwoFA();
+  }
+
+  @Post('validate-2fa')
+  validateTwoFA(@Body('secret') secret: string, @Body('token') token: string) {
+    return {
+      isValid: this.authService.validateTwoFAToken(secret, token)
+    };
+  }
+
+  @Post('validate-2fa-login')
+  @Auth(ValidRoles.user)
+  async validateTwoFALogin(
+    @Req() req: any, 
+    @GetUser() user: User,
+    @Res() res: Response
+  ) : Promise<Response> {
+
+    const token = req.body.token;
+    const isValid = this.authService.validateTwoFAToken(user.twoFASecret, token);
+    if (isValid) {
+      return res.status(200).json({ status: 'success', message: '2FA enabled successfully' });
+    } else {
+      return res.status(400).json({ status: 'error', message: 'Invalid token' });
+    }
+  }
+
+  @Post('enable-2fa')
+  @Auth(ValidRoles.user)
+  async enableTwoFA(
+    @Req() req: any, 
+    @GetUser() user: User,
+    @Res() res: Response
+  ): Promise<Response> {
+    const secret = req.body.secret;
+    const token = req.body.token;
+
+    const isValid = this.authService.validateTwoFAToken(secret, token);
+    if (isValid) {
+      await this.authService.saveTwoFASecret(user.id, secret);
+      return res.status(200).json({ status: 'success', message: '2FA enabled successfully' });
+    } else {
+      return res.status(400).json({ status: 'error', message: 'Invalid token' });
+    }
+  }
+  
+
+  @Post('disable-2fa')
+  async disableTwoFA(user: User): Promise<ResponseMessage> {
+    await this.authService.disableTwoFA(user.id);
+    return { status: 'success', message: '2FA disabled successfully' };
   }
 }
-
-/**
- Este archivo define el controlador de autenticación, el cual contiene las rutas
- para registrar e iniciar sesión de los usuarios, verificar el estado de
- autenticación y algunas rutas de prueba privadas con protección de roles y
- guardias. Utiliza decoradores personalizados para extraer información del
- usuario y las cabeceras HTTP de las solicitudes.
- */

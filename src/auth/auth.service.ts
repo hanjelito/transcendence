@@ -3,10 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
 
 import { LoginUserDto, CreateUserDto } from './dto';
 import { User } from '../user/entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+
 
 @Injectable()
 export class AuthService {
@@ -31,7 +34,8 @@ export class AuthService {
 
     // Retorna el usuario logueado junto con su token JWT.
     return {
-      ...this.filterCreate(user),
+      // ...this.filterCreate(user),
+      authentication: user.hasTwoFASecret,
       token: this.getJwtToken({ id: user.id }),
     };
   }
@@ -41,7 +45,7 @@ export class AuthService {
     const { email, name, lastName, login, password, image } = user;
 
     // Busca al usuario por su correo electrónico.
-    const userDB = await this.userRepository.findOne({
+    const userDB= await this.userRepository.findOne({
       where: { email },
       select: { email: true, password: true, id: true },
     });
@@ -54,20 +58,19 @@ export class AuthService {
         name,
         lastName,
         login,
-        images: [image.link],
+        images: image.link,
       });
 
       delete newUser.password;
       // // Retorna el usuario logueado junto con su token JWT.
       return {
-        ...newUser,
         token: this.getJwtToken({ id: newUser.id }),
       };
     }
 
     // Retorna el usuario logueado junto con su token JWT.
     return {
-      ...userDB,
+      // ...userDB,
       token: this.getJwtToken({ id: userDB.id }),
     };
   }
@@ -75,7 +78,7 @@ export class AuthService {
   // Método para verificar el estado de autenticación del usuario.
   async checkAuthStatus(user: User) {
     return {
-      ...this.filterCreate(user),
+      // ...this.filterCreate(user),
       token: this.getJwtToken({ id: user.id }),
     };
   }
@@ -110,7 +113,7 @@ export class AuthService {
 
       // Retorna el usuario creado junto con su token JWT.
       return {
-        ...this.filterCreate(user),
+        // ...this.filterCreate(user),
         token: this.getJwtToken({ id: user.id }),
       };
     } catch (error) {
@@ -155,12 +158,34 @@ export class AuthService {
     const {isActive, roles, password, ...newUser} = user;
     return { ...newUser };
   }
-}
 
-/**
-Este archivo define el servicio de autenticación, que contiene métodos
-para crear nuevos usuarios, iniciar sesión y verificar el estado de
-autenticación de un usuario. También incluye funciones para generar
-tokens JWT y manejar errores de base de datos. Utiliza bcrypt para encriptar
-las contraseñas de los usuarios.
- */
+  async generateTwoFA(): Promise<{ secret: string; QRCodeURL: string }> {
+    const secret = speakeasy.generateSecret({ length: 20 });
+    const QRCodeURL = await qrcode.toDataURL(secret.otpauth_url);
+
+    return {
+      secret: secret.base32,
+      QRCodeURL
+    };
+  }
+
+  validateTwoFAToken(userSecret: string, userToken: string): boolean {
+    return speakeasy.totp.verify({
+      secret: userSecret,
+      encoding: 'base32',
+      token: userToken,
+    });
+  }
+
+  async saveTwoFASecret(userId: string, secret: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: {id: userId} } );
+    user.twoFASecret = secret;
+    return this.userRepository.save(user);
+  }
+
+  async disableTwoFA(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne( {where: {id: userId} });
+    user.twoFASecret = null;
+    return this.userRepository.save(user);
+  }
+}

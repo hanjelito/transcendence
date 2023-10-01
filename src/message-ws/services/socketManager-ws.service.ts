@@ -7,9 +7,12 @@ export class SocketManagerService {
 
   registerClient(userId: string, clientId: string) {
     if (this.clients.has(userId)) {
-      this.clients.get(userId).push(clientId);
+        const clientList = this.clients.get(userId);
+        if (!clientList.includes(clientId)) {
+            clientList.push(clientId);
+        }
     } else {
-      this.clients.set(userId, [clientId]);
+        this.clients.set(userId, [clientId]);
     }
   }
 

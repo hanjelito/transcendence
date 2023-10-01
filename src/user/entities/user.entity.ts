@@ -1,8 +1,6 @@
 import {
 	BeforeInsert, BeforeUpdate,
 	Column, Entity,
-	JoinColumn,
-	ManyToOne,
 	OneToMany, PrimaryGeneratedColumn
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
@@ -51,18 +49,27 @@ export class User {
 	})
 	login: string;
 
+	//
+	@ApiProperty({
+		example: 'first time',
+		description: 'first connection',
+	})
+	@Column({
+		type: 'boolean',
+		default: false,
+	})
+	first_time: boolean;
+
 	// Propiedad imagenes del usuario, de tipo texto.
 	@ApiProperty({
-		example: '[	"image1.jpg",	"image2.jpg",	"image3.jpg"]',
+		example: 'url image',
 		description: 'images of the user avatar',
 	})
 	@Column({
 		type: 'text',
-		array: true,
-		default: []
+		default: 'uploads/default.png',
 	})
-	// Propiedad images del usuario, que es un array de tipo texto, con un valor predeterminado de [].
-	images: string[];
+	images: string;
 
 	@ApiProperty({
 		example: 'Password1234',
@@ -119,6 +126,16 @@ export class User {
 	// Propiedad roles del usuario, que es un array de tipo texto, con un valor predeterminado de ['user'].
 	roles: string[];
 
+	//
+	@Column({
+		nullable: true,
+	})
+	twoFASecret: string;
+
+	get hasTwoFASecret(): boolean {
+        return !!this.twoFASecret;
+    }
+	//
 	@ApiProperty()
 	@OneToMany(
 		() => Chat,

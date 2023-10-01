@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { ChatService } from 'src/chat/chat.service';
 import { ChatUserService } from 'src/chat-user/chat-user.service';
+import { ContactService } from 'src/contact/contact.service';
 import { SocketManagerService } from './socketManager-ws.service';
 // import { Chat } from 'src/chat/entities';
 
@@ -17,6 +18,14 @@ interface ConnectClient {
 		socket: Socket,
 		user: User
 	}
+}
+
+interface Contacts {
+	id: string;
+	login: string;
+	name: string;
+	images: string;
+	blocked: boolean;
 }
 
 // Decorador para indicar que esta clase es un proveedor de servicio en NestJS.
@@ -33,6 +42,7 @@ export class MessageWsService {
 		private readonly userRepository: Repository<User>,
 		private readonly chatService: ChatService,
 		private readonly chatUserService: ChatUserService,
+		private readonly contactService: ContactService,
 		//
 		private readonly socketManagerService: SocketManagerService,
 	) { }
@@ -97,5 +107,18 @@ export class MessageWsService {
 		});
 
 		return result;
+	}
+	// return contact byId
+	async getContactById(id: string): Promise<Contacts[]>
+	{
+		try {
+			if(id) {
+				const contactData = await this.contactService.findOne(id);
+				return contactData;
+			}
+			return [];
+		} catch (error) {
+			throw error;
+		}
 	}
 }

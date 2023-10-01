@@ -2,7 +2,7 @@ import {Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneT
 import { Exclude } from 'class-transformer';
 import { User } from '../../user/entities/user.entity';
 import { ChatUser } from 'src/chat-user/entities/chat-user.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 @Entity()
 export class Chat {
@@ -72,7 +72,8 @@ export class Chat {
 	})
 	password: string;
 
-	@ApiProperty()
+	@ApiHideProperty()
+	// @ApiProperty()
 	@OneToMany(
 		() => ChatUser,
 		(chatUsers) => chatUsers.chat,

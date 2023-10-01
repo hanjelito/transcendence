@@ -71,10 +71,10 @@ export class GlobalServiceGames{
     static game_cfg: any = {  ///default configuration
       pad:[5,100],
       ballrad: 5,
-      game_vel: 40,
-      time_wait: 15,
+      game_vel: 20,
+      time_wait: 40,
       time_start: 5,
-      time_play: 60,
+      time_play: 180,
       time_show: 10,
     };
     static waiting_room: any = null

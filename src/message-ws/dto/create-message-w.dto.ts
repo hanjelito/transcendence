@@ -41,6 +41,7 @@ export class Params {
   @IsString()
   @IsOptional()
   command: string;
+
 }
 
 export class CreateMessageWDto {

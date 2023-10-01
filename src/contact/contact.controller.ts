@@ -37,8 +37,11 @@ export class ContactController {
   //   return this.contactService.update(+id, updateContactDto);
   // }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.contactService.remove(+id);
-  // }
+  @Delete()
+  remove(
+    @Body() deleteContactDto: CreateContactDto,
+    @GetUser() user: User,
+  ) {
+    return this.contactService.remove(deleteContactDto, user);
+  }
 }
