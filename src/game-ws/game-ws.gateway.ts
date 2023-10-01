@@ -487,7 +487,7 @@ export class GameWsGateway {
 			// level 2
 			xc = 401
 			yc = m * xc + d
-			if ( (game.game_type >=2)
+			if ( (game.game_type ==2 || game.game_type == 3)
 				&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
 				&& ( ((yc >= 51) && (yc <= 151)) ||  ((yc >= 351) && (yc <= 451) )  )
 				){
@@ -500,7 +500,7 @@ export class GameWsGateway {
 				}
 			xc = 599
 			yc = m * xc + d
-			if ( (game.game_type >=2)
+			if ( (game.game_type ==2 || game.game_type ==3)
 				&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
 				&& ( ((yc >= 51) && (yc <= 151)) ||  ((yc >= 351) && (yc <= 451) ) )
 				){

@@ -13,7 +13,9 @@ import { GamesModule } from './games/games.module';
 import { GamesUserModule } from './games _user/gamesuser.module';
 import { ApiTokenCheckMiddleware } from './common/middleware/api-token-check-middleware';
 import { ScheduleModule } from '@nestjs/schedule';
-
+import { UploadModule } from './upload/upload.module'
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 // La clase AppModule es el módulo principal de la aplicación
 // y se encarga de importar todos los módulos necesarios.
 @Module({
@@ -29,6 +31,14 @@ import { ScheduleModule } from '@nestjs/schedule';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    //Para acceder a las imagenes de los avatares desde url
+    
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '/public/'), // added ../ to get one folder back
+      serveStaticOptions: { index: false },
+      //serveRoot: '/avatars/' //last slash was important
+    }),
+    
 
     // initializes the scheduler and registers any declarative cron jobs, timeouts and intervals 
     ScheduleModule.forRoot(),
@@ -45,6 +55,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     GamesModule,
     GamesUserModule,
     ContactModule,
+    UploadModule,
 
   ],
 
