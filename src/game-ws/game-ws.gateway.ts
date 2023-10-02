@@ -1,7 +1,7 @@
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { GameWsService } from './game-ws.service';
 import { Socket, Server } from 'socket.io';
-import {Inject, Logger, NotFoundException } from '@nestjs/common';
+import {Inject, Logger, NotFoundException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
 import { MessageWsGateway } from '../message-ws/message-ws.gateway';
@@ -12,6 +12,8 @@ import { match } from 'assert';
 import {GamesService} from '../games/games.service'
 import { json } from 'stream/consumers';
 
+@Injectable()
+
 @WebSocketGateway({
 	cors: {
 		origin: '*',
@@ -21,7 +23,6 @@ import { json } from 'stream/consumers';
 	},
 	namespace: 'game-ws',
 })
-
 export class GameWsGateway {
 	//@Inject(GamesService)
 	private readonly logger = new Logger("Game Logic");
@@ -487,7 +488,7 @@ export class GameWsGateway {
 			// level 2
 			xc = 401
 			yc = m * xc + d
-			if ( (game.game_type >=2)
+			if ( (game.game_type ==2 || game.game_type == 3)
 				&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
 				&& ( ((yc >= 51) && (yc <= 151)) ||  ((yc >= 351) && (yc <= 451) )  )
 				){
@@ -500,7 +501,7 @@ export class GameWsGateway {
 				}
 			xc = 599
 			yc = m * xc + d
-			if ( (game.game_type >=2)
+			if ( (game.game_type ==2 || game.game_type ==3)
 				&& (((xc <= game.ballpos[0]) && (xc >= (game.ballpos[0]+game.ballvel[0]*game.game_vel))) || ((xc >= game.ballpos[0]) && (xc <= (game.ballpos[0]+game.ballvel[0]*game.game_vel)))) // barrier
 				&& ( ((yc >= 51) && (yc <= 151)) ||  ((yc >= 351) && (yc <= 451) ) )
 				){

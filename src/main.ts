@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
+import * as express from 'express';
 import { AppModule } from './app.module';
 import { CustomExceptionFilter } from './filters/custom-exception.filter';
 import { TokenErrorFilter } from './filters/token-error';
@@ -19,7 +19,7 @@ async function bootstrap() {
   // Establece un prefijo global para todas las rutas de la aplicación.
   app.setGlobalPrefix('api');
 
-
+  //app.use('/', express.static('../avatars'));
 
   // Agrega un ValidationPipe global para validar automáticamente los datos de entrada.
   // La opción 'whitelist' elimina las propiedades no permitidas en los DTOs.
