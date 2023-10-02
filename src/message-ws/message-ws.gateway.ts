@@ -55,7 +55,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	}
 
 	async handleReConnection(client: Socket) {
-		
+		console.log('reconnect');
 	}
 	// Método que se ejecuta cuando un cliente se desconecta.
 	async handleDisconnect(client: Socket) {
