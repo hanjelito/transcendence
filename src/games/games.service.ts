@@ -7,6 +7,7 @@ import { Games } from './entities/games.entity';
 import { Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
 import {GlobalServiceGames} from '../services/games.service'
+import { ExceptionService } from '../services/exception.service';
 
 @Injectable()
 export class GamesService {
@@ -14,32 +15,49 @@ export class GamesService {
   constructor(
     @InjectRepository(Games)
     private gamesRepository: Repository<Games>,
+    private exceptionService: ExceptionService,
     //private globalServiceGames: GlobalServiceGames
   )
   {}
 
   async create(createGameDto: any) {
-    this.logger.log("Juego guardado:" + JSON.stringify(createGameDto) );
-    return this.gamesRepository.save(createGameDto);
-    //return `This action create a game` + createGameDto;
+    try {
+      this.logger.log("Juego guardado:" + JSON.stringify(createGameDto) );
+      return this.gamesRepository.save(createGameDto);
+    } catch (error) {
+          this.exceptionService.handleDBExceptions(error);
+    }
   }
 
   async findAll() {
-    //console.log("prueba")
-    //console.log(GlobalServiceGames.games)
-    return(GlobalServiceGames.waiting_room)
-    //return this.gamesRepository.find()
+    try {
+      return(GlobalServiceGames.waiting_room)
+    } catch (error) {
+      this.exceptionService.handleDBExceptions(error);
+    }
   }
   
   async findBy(id: string) {
-    return this.gamesRepository.find(
-        {where: [{ p1_id:id}, 
-                 {p2_id:id}]})
+    try {
+      return this.gamesRepository.find(
+          {where: [{ p1_id:id}, 
+                  {p2_id:id}]})
+    } catch (error) {
+      this.exceptionService.handleDBExceptions(error);
+    }
   }
   liveGamesList() {
-    return (GlobalServiceGames.games)
+    try {
+      return (GlobalServiceGames.games)
+    } catch (error) {
+      this.exceptionService.handleDBExceptions(error);
+    }  
   }
   waitingRoom() {
-    return (GlobalServiceGames.waiting_room)
+    try {
+      return (GlobalServiceGames.waiting_room)
+    } catch (error) {
+      this.exceptionService.handleDBExceptions(error);
+    }  
   }
 }

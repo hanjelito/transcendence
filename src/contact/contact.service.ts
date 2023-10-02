@@ -1,4 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { WebSocketGateway, SubscribeMessage, MessageBody, OnGatewayInit, WebSocketServer, ConnectedSocket } from '@nestjs/websockets';
+import { Socket, Server } from 'socket.io';
 import { EntityNotFoundError, Equal, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -9,6 +11,7 @@ import { Contact } from './entities/contact.entity';
 import { User } from '../user/entities/user.entity';
 import { isUUID } from 'class-validator';
 import { DeleteContactDto } from './dto/delete-contact.dto';
+import { SocketManagerService } from '../message-ws/services/socketManager-ws.service';
 
 @Injectable()
 export class ContactService {
@@ -16,9 +19,14 @@ export class ContactService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Contact) private contactRepository: Repository<Contact>,
+    private readonly socketManagerService: SocketManagerService,
     private exceptionService: ExceptionService
   ) {}
-  
+
+    	// Una referencia al servidor WebSocket.
+    @WebSocketServer()
+    wss: Server;
+
   async create(createContactDto: CreateContactDto, user: User) {
     try {
       const { contactId } = createContactDto;
@@ -54,6 +62,40 @@ export class ContactService {
         await this.contactRepository.save([newContact, reciprocalContact]);
 
         const { password, email, isActive, roles, ...resContact } = contactData;
+        
+        // Emit update to sockets of the client
+        // Obtiene los sockets abiertos por cada cliente.
+        const idSockets = this.socketManagerService.getClients(user.id);
+        
+        // Sacar la lista de constactos
+        const new_Contact_list = await this.contactRepository.find({
+          where: [
+                { user: { id: user.id }}
+            ]
+        });
+
+        // se emite a si mismo y a sus diferentes sockets.
+        idSockets.forEach(idSocket => {
+          //this.wss.to(idSocket).emit('my-contact-server', new_Contact_list);
+          this.wss.to(idSocket).emit('server-game', {
+            command: 'UPDATE_CONTACTS',
+            data: new_Contact_list,
+            timestamp:  Date.now() 
+          });
+          console.log("updating list contacts because new", new_Contact_list)
+        });
+        
+        /*
+        if (idSockets.length === 1){
+          contacts.forEach(async (contact) => {
+            const contactSockets = this.socketManagerService.getClients(contact.id);
+            contactSockets.forEach(socketId => {
+              this.wss.to(socketId).emit('connect-contact-server', idUser);
+            });
+          });
+        }
+        */
+        
         return {
             message: "new contact",
             status: true,
@@ -131,6 +173,28 @@ export class ContactService {
             .where("userId = :userId AND contactId = :contactId", { userId: user.id, contactId: contactId })
             .orWhere("userId = :contactId AND contactId = :userId", { userId: user.id, contactId: contactId })
             .execute();
+        
+        // Emit update to sockets of the client
+        // Obtiene los sockets abiertos por cada cliente.
+        const idSockets = this.socketManagerService.getClients(user.id);
+        
+        // Sacar la lista de constactos
+        const new_Contact_list = await this.contactRepository.find({
+          where: [
+                { user: { id: user.id }}
+            ]
+        });
+
+        // se emite a si mismo y a sus diferentes sockets.
+        idSockets.forEach(idSocket => {
+          //this.wss.to(idSocket).emit('my-contact-server', new_Contact_list);
+          this.wss.to(idSocket).emit('server-game', {
+            command: 'UPDATE_CONTACTS',
+            data: new_Contact_list,
+            timestamp:  Date.now() 
+          });
+          console.log("updating list contacts because delete", new_Contact_list)
+        });
 
         return {
             message: "Contact deleted successfully",

@@ -1,7 +1,7 @@
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { GameWsService } from './game-ws.service';
 import { Socket, Server } from 'socket.io';
-import {Inject, Logger, NotFoundException } from '@nestjs/common';
+import {Inject, Logger, NotFoundException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
 import { MessageWsGateway } from '../message-ws/message-ws.gateway';
@@ -12,6 +12,8 @@ import { match } from 'assert';
 import {GamesService} from '../games/games.service'
 import { json } from 'stream/consumers';
 
+@Injectable()
+
 @WebSocketGateway({
 	cors: {
 		origin: '*',
@@ -21,7 +23,6 @@ import { json } from 'stream/consumers';
 	},
 	namespace: 'game-ws',
 })
-
 export class GameWsGateway {
 	//@Inject(GamesService)
 	private readonly logger = new Logger("Game Logic");
