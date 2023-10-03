@@ -11,6 +11,15 @@ import {GamesUserService} from '../games _user/gamesuser.service'
 import { match } from 'assert';
 import {GamesService} from '../games/games.service'
 import { json } from 'stream/consumers';
+import {MessageWsService,SocketManagerService } from '../message-ws/services';
+
+interface Contacts {
+	id: string;
+	login: string;
+	name: string;
+	images: string;
+	blocked: boolean;
+}
 
 @Injectable()
 
@@ -34,6 +43,8 @@ export class GameWsGateway {
 		private readonly authService: AuthService,
 		private readonly gamesService : GamesService,
 		private readonly gamesuserService : GamesUserService,
+		private readonly messageWsService: MessageWsService,
+		private readonly socketManagerService: SocketManagerService,
 	) {}
 
 	@WebSocketServer()
@@ -83,7 +94,10 @@ export class GameWsGateway {
 					break;		
 				case 'CHALLENGE_DISMISS':
 					await this.challengeDismiss(client, payload);
-					break;					
+					break;	
+				case 'UPDATE_FRIENDS':
+					await this.updateFriends(client, payload);
+					break;				
 				default:
 					throw new NotFoundException(`Unsupported command: ${payload.command}`);
 			}
@@ -335,16 +349,44 @@ export class GameWsGateway {
 	}
 	async challengeDismiss(client: Socket, payload: any) {
 		console.log("challenge dismiss", payload)
-		this.wss.emit('server-game', {
-			command: 'MSG',
-			params: { player_id_1:payload.params.player_id_1,
-					  player_id_2:"payload.params.player_id_2",
-					  msg: "Reto No aceptado por " + payload.params.player_nick_2 
-					}, 
-			timestamp:  Date.now()
-			 } );
+		try {
+				this.wss.emit('server-game', {
+					command: 'MSG',
+					params: { player_id_1:payload.params.player_id_1,
+							player_id_2:"payload.params.player_id_2",
+							msg: "Reto No aceptado por " + payload.params.player_nick_2 
+							}, 
+					timestamp:  Date.now()
+				} );
+		} catch (error) {
+			throw error;
+		}
 	}
-		//------ intervals ----- 
+	async updateFriends(client: Socket, payload: any) {
+		console.log("update friends of user", payload)
+
+		// Obtiene la lista de contactos del usuario que acaba de conectarse.
+		const userContacts: Contacts[] = await this.messageWsService.getContactById(payload.params.userId);
+
+		// Obtiene los sockets abiertos por cada cliente.
+		const idSockets = this.socketManagerService.getClients(payload.params.userId);
+
+		// Crea un nuevo arreglo transformando los datos de los contactos.
+		// console.log(contacts);
+		// se emite a si mismo.
+		idSockets.forEach(idSocket => {
+			this.wss.to(idSocket).emit('server-game', {
+				command: 'MSG',
+				params: { player_id_1: payload.params.userId,
+						player_id_2:"payload.params.player_id_2",
+						msg: "Changing friends of " +  payload.params.userId + " to " + userContacts
+						}, 
+				timestamp:  Date.now()
+				} );
+		});
+	}
+
+	//------ intervals ----- 
 	//Counter down to handle times-out in phases
     @Interval(1000)
     handleCountdownInterval() {
