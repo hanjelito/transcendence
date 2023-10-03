@@ -1,16 +1,13 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-
-import { EntityNotFoundError, Equal, Repository } from 'typeorm';
+import { EntityNotFoundError, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { CreateContactDto } from './dto/create-contact.dto';
-// import { UpdateContactDto } from './dto/update-contact.dto';
 import { ExceptionService } from '../services/exception.service';
+import { CreateContactDto } from './dto/create-contact.dto';
+import { DeleteContactDto } from './dto/delete-contact.dto';
 import { Contact } from './entities/contact.entity';
 import { User } from '../user/entities/user.entity';
 import { isUUID } from 'class-validator';
-import { DeleteContactDto } from './dto/delete-contact.dto';
-import { SocketManagerService } from '../message-ws/services/socketManager-ws.service';
 
 @Injectable()
 export class ContactService {
@@ -18,10 +15,9 @@ export class ContactService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Contact) private contactRepository: Repository<Contact>,
-    private readonly socketManagerService: SocketManagerService,
     private exceptionService: ExceptionService
   ) {}
-
+  
   async create(createContactDto: CreateContactDto, user: User) {
     try {
       const { contactId } = createContactDto;
@@ -57,7 +53,6 @@ export class ContactService {
         await this.contactRepository.save([newContact, reciprocalContact]);
 
         const { password, email, isActive, roles, ...resContact } = contactData;
-        
         return {
             message: "new contact",
             status: true,
