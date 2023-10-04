@@ -250,11 +250,11 @@ export class GameWsGateway {
 					this.logger.log("Nuevo juego creado:  " + JSON.stringify(payload.params))
 					// sent message new game start
 					this.wss.emit('server-game', {
-						command: 'MSG',
-						params: { //player_id_1:payload.params.player_id_1,
-									player_id_1:'*',
-								  player_id_2:payload.params.player_id_2,
-								  msg: "Juego creado: " + payload.params.player_nick_1 + " vs " + payload.params.player_nick_2
+						command: 'GAME_CREATED',
+						params: { 
+								  player_id_1: payload.params.player_id_1,
+								  player_id_2: payload.params.player_id_2,
+								  msg: "A game is waiting for you: " + payload.params.player_nick_1 + " vs " + payload.params.player_nick_2
 								}, 
 						timestamp:  Date.now()
 						 } );
