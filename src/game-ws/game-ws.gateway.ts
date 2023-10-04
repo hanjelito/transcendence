@@ -10,8 +10,16 @@ import {GlobalServiceGames} from '../services/games.service'
 import {GamesUserService} from '../games _user/gamesuser.service'
 import { match } from 'assert';
 import {GamesService} from '../games/games.service'
+import { EntityNotFoundError, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Contact } from '../contact/entities/contact.entity';
+import { User } from 'src/user/entities/user.entity';
+import { isUUID } from 'class-validator';
+import { ExceptionService } from '../services/exception.service';
+
 import { json } from 'stream/consumers';
-import {MessageWsService,SocketManagerService } from '../message-ws/services';
+import { SocketManagerService } from '../message-ws/services';
+//import { MessageWsService } from '../message-ws/services/message-ws.service';
 
 interface Contacts {
 	id: string;
@@ -43,8 +51,12 @@ export class GameWsGateway {
 		private readonly authService: AuthService,
 		private readonly gamesService : GamesService,
 		private readonly gamesuserService : GamesUserService,
-		private readonly messageWsService: MessageWsService,
-		private readonly socketManagerService: SocketManagerService,
+		@InjectRepository(User) private userRepository: Repository<User>,
+		@InjectRepository(Contact) private contactRepository: Repository<Contact>,
+		 private exceptionService: ExceptionService,
+		 private socketManagerService:SocketManagerService,
+		 //private messageWsService:MessageWsService
+
 	) {}
 
 	@WebSocketServer()
@@ -364,26 +376,59 @@ export class GameWsGateway {
 	}
 	async updateFriends(client: Socket, payload: any) {
 		console.log("update friends of user", payload)
-
+		const id = payload.params.userId
 		// Obtiene la lista de contactos del usuario que acaba de conectarse.
-		const userContacts: Contacts[] = await this.messageWsService.getContactById(payload.params.userId);
-
+		//const userContacts: Contacts[] = await this.messageWsService.getContactById(id);
+		
+		let userContacts: Contacts[] 
+		try {
+			if (!isUUID(id))
+			  throw new NotFoundException(`Contact with id ${id} not founds`);
+	
+			  const contacts = await this.contactRepository.find({
+				where: {
+				  user: { id: id },
+				},
+				relations: ["contact"],
+			  });
+		  
+			if (!contacts){ 
+				userContacts=[];
+			}
+			else {
+				userContacts = contacts.map(contact => ({
+				id: contact.contact.id,
+				login: contact.contact.login,
+				name: contact.contact.name,
+				images: contact.contact.images,
+				blocked: contact.blocked,
+				}));
+			}
+			
+		  } catch (error) {
+			if (error instanceof EntityNotFoundError) {
+			  this.exceptionService.handleNotFoundException('Contact not found', `Contact with id not found.`);
+			} else {
+			  // si no, lanzar un error
+			  this.exceptionService.handleDBExceptions(error);
+			}
+		}
+		
 		// Obtiene los sockets abiertos por cada cliente.
-		const idSockets = this.socketManagerService.getClients(payload.params.userId);
+		// socketManager-ws.service getClients
+		const idSockets = this.socketManagerService.getClients(id);
 
 		// Crea un nuevo arreglo transformando los datos de los contactos.
 		// console.log(contacts);
 		// se emite a si mismo.
 		idSockets.forEach(idSocket => {
 			this.wss.to(idSocket).emit('server-game', {
-				command: 'MSG',
-				params: { player_id_1: payload.params.userId,
-						player_id_2:"payload.params.player_id_2",
-						msg: "Changing friends of " +  payload.params.userId + " to " + userContacts
-						}, 
+				command: 'UPDATE_FRIENDS',
+				data: userContacts, 
 				timestamp:  Date.now()
 				} );
 		});
+	
 	}
 
 	//------ intervals ----- 

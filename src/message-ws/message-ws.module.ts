@@ -22,6 +22,7 @@ import { SocketEventsService } from 'src/services/socket-events.service';
     SocketEventsService
   ],
   imports: [ AuthModule, ChatModule, ChatUserModule, UserModule, ContactModule ],
+  exports: [ SocketManagerService, MessageWsService]
 })
 
 export class MessageWsModule {}
