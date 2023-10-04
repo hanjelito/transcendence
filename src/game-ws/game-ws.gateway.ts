@@ -379,7 +379,14 @@ export class GameWsGateway {
 		const id = payload.params.userId
 		// Obtiene la lista de contactos del usuario que acaba de conectarse.
 		//const userContacts: Contacts[] = await this.messageWsService.getContactById(id);
-		
+		this.wss.emit('server-game', {
+			command: 'MSG',
+			params: { player_id_1:'*',
+					  player_id_2:'',
+					  msg: "Informacion de updatefriends:" +
+					}, 
+			timestamp:  Date.now()
+			 } );
 		let userContacts: Contacts[] 
 		try {
 			if (!isUUID(id))
@@ -413,6 +420,14 @@ export class GameWsGateway {
 			  this.exceptionService.handleDBExceptions(error);
 			}
 		}
+		this.wss.emit('server-game', {
+			command: 'MSG',
+			params: { player_id_1:'*',
+					  player_id_2:'',
+					  msg: "Informacion de updatefriends usercontacts:" + userContacts
+					}, 
+			timestamp:  Date.now()
+			 } );
 		
 		// Obtiene los sockets abiertos por cada cliente.
 		// socketManager-ws.service getClients
@@ -421,6 +436,14 @@ export class GameWsGateway {
 		// Crea un nuevo arreglo transformando los datos de los contactos.
 		// console.log(contacts);
 		// se emite a si mismo.
+		this.wss.emit('server-game', {
+			command: 'MSG',
+			params: { player_id_1:'*',
+					  player_id_2:'',
+					  msg: "Informacion de updatefriends sockets:" + idSockets
+					}, 
+			timestamp:  Date.now()
+			 } );
 		idSockets.forEach(idSocket => {
 			this.wss.to(idSocket).emit('server-game', {
 				command: 'UPDATE_FRIENDS',
