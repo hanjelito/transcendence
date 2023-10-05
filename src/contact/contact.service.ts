@@ -29,11 +29,9 @@ export class ContactService {
       // Verificar si ya existen los contactos
       const existingContact = await this.contactRepository.findOne({
           where: [
-                { user: { id: user.id }, contact: { id: contactId } },
-                { user: { id: contactId }, contact: { id: user.id } }
+                { user: { id: user.id }, contact: { id: contactId } }
             ]
         });
-        
         if (existingContact) {
             throw new ConflictException(`Contact with id ${contactId} already exists`);
         }
@@ -48,11 +46,10 @@ export class ContactService {
         }
 
         const newContact = this.contactRepository.create({ user, contact: contactData });
-        const reciprocalContact = this.contactRepository.create({ user: contactData, contact: user });
 
-        await this.contactRepository.save([newContact, reciprocalContact]);
+        await this.contactRepository.save([newContact]);
 
-        const { password, email, isActive, roles, ...resContact } = contactData;
+        const { password, twoFASecret, first_time, email, isActive, roles, ...resContact } = contactData;
         return {
             message: "new contact",
             status: true,
