@@ -383,7 +383,7 @@ export class GameWsGateway {
 			command: 'MSG',
 			params: { player_id_1:'*',
 					  player_id_2:'',
-					  msg: "Informacion de updatefriends:" +
+					  msg: "Informacion de updatefriends:"
 					}, 
 			timestamp:  Date.now()
 			 } );
