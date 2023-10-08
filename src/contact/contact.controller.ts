@@ -32,6 +32,11 @@ export class ContactController {
     return this.contactService.findOne(id);
   }
 
+  @Get('dual/:id')
+  findOneDual(@Param('id') id: string) {
+    return this.contactService.findOneDual(id);
+  }
+
   // @Patch(':id')
   // update(@Param('id') id: string, @Body() updateContactDto: UpdateContactDto) {
   //   return this.contactService.update(+id, updateContactDto);
@@ -45,3 +50,4 @@ export class ContactController {
     return this.contactService.remove(deleteContactDto, user);
   }
 }
+

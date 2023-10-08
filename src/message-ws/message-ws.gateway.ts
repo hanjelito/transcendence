@@ -104,6 +104,17 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		}
 	}
 
+	@SubscribeMessage('contact-online')
+	async handleTestEvent(client: Socket, data: any): Promise<any> {
+		try {
+			const contactOnline = await this.myContactOnline(data.message);
+			return { success: true, message: contactOnline };
+		} catch (error) {
+			console.error('Error al obtener contactOnline:', error);
+			return { success: false, message: 'Hubo un error al procesar la solicitud' };
+		}
+	}
+
 	//socket
 	async contacstEmit(client: Socket, IdUUID: string, contacts: Contacts[]) {
 		// console.log('contacstEmit:', client.id);
@@ -111,7 +122,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
 
 		// Crea un nuevo arreglo transformando los datos de los contactos.
-		// console.log(contacts);
 		const transformedContactsOnline = await this.myContactOnline(contacts)
 		if (!transformedContactsOnline) {
 			throw new Error("Error transformando contactos");
@@ -137,7 +147,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		const contactOnline = contacts.map(contactItem => {
 			if (this.socketManagerService.getClients(contactItem.id).length > 0) {
 				const { images, blocked, ...rest } = contactItem; 
-	
 				return {
 					...rest,
 					images: null, 
@@ -145,8 +154,7 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 				};
 			}
 			return null;
-		}).filter(item => item !== null);
-	
+		}).filter(item => item !== null);		
 		return contactOnline;
 	}
 	// indica que tiene que actualizar su lista de contactos
@@ -163,7 +171,6 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			});
 		});
 	}
-
 
 	// Otro método para manejar diferentes tipos de mensajes de los clientes.
 	@SubscribeMessage('client-message')

@@ -113,7 +113,7 @@ export class MessageWsService {
 	{
 		try {
 			if(id) {
-				const contactData = await this.contactService.findOne(id);
+				const contactData = await this.contactService.findOneDual(id);
 				return contactData;
 			}
 			return [];

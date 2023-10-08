@@ -97,6 +97,37 @@ export class ContactService {
       }
   }
 
+  async findOneDual(id: string) {
+    try {
+      if (!isUUID(id))
+          throw new NotFoundException(`Contact with id ${id} not founds`);
+
+      const mutualContacts = await this.contactRepository.createQueryBuilder("c1")
+          .innerJoin("Contact", "c2", "c1.userId = c2.contactId AND c1.contactId = c2.userId")
+          .where("c1.userId = :id AND c1.contactId != :id", { id: id })
+          .leftJoinAndSelect("c1.contact", "contact")
+          .getMany();
+
+      if (!mutualContacts.length) 
+          return [];
+
+      return mutualContacts.map(contact => ({
+          id: contact.contact.id,
+          login: contact.contact.login,
+          name: contact.contact.name,
+          images: contact.contact.images,
+          blocked: contact.blocked,
+      }));
+          
+  } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+          this.exceptionService.handleNotFoundException('Contact not found', `Contact with id not found.`);
+      } else {
+          this.exceptionService.handleDBExceptions(error);
+      }
+    }
+  }
+
   async remove(deleteContactDto: DeleteContactDto, user: User) {
     try {
         const { contactId } = deleteContactDto;
