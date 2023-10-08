@@ -137,10 +137,9 @@ export class ContactService {
         const existingContact = await this.contactRepository.findOne({
             where: [
                 { user: { id: user.id }, contact: { id: contactId } },
-                { user: { id: contactId }, contact: { id: user.id } }
+                // { user: { id: contactId }, contact: { id: user.id } }
             ]
         });
-        console.log(existingContact.id);
 
         if (!existingContact) {
             throw new NotFoundException(`Contact with id ${contactId} not found`);
@@ -152,7 +151,7 @@ export class ContactService {
             .delete()
             .from(Contact)
             .where("userId = :userId AND contactId = :contactId", { userId: user.id, contactId: contactId })
-            .orWhere("userId = :contactId AND contactId = :userId", { userId: user.id, contactId: contactId })
+            // .orWhere("userId = :contactId AND contactId = :userId", { userId: user.id, contactId: contactId })
             .execute();
 
         return {
