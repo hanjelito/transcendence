@@ -147,11 +147,27 @@ export class ChatUserService {
 	async findAllChatsByUserId(identifier: string)
 	{
 		if (isUUID(identifier)) {
+			// const chatUsers = await this.chatUsersRepository
+			// .createQueryBuilder('chatUser')
+			// .select('chat.id', 'chatId') // Adjusted this line
+			// .addSelect('chat.name', 'chatName')  // Adjusted this line
+			// .addSelect('user.id', 'userId') // Adjusted this line
+			// .addSelect('chat.password', 'password') // Adjusted this line
+			// .innerJoin('chatUser.chat', 'chat')
+			// .innerJoin('chatUser.user', 'user')
+			// .where('user.id = :userId', { userId: identifier })
+			// .getRawMany();
 			const chatUsers = await this.chatUsersRepository
 			.createQueryBuilder('chatUser')
-			.select('chat.id', 'chatId') // Adjusted this line
-			.addSelect('chat.name', 'chatName')  // Adjusted this line
-			.addSelect('user.id', 'userId') // Adjusted this line
+			.select('chat.id', 'chatId')
+			.addSelect('chat.name', 'chatName')
+			.addSelect('user.id', 'userId')
+			.addSelect(`
+				CASE 
+					WHEN chat.password IS NOT NULL AND chat.password <> '' 
+					THEN '*****' 
+					ELSE NULL 
+				END`, 'password')
 			.innerJoin('chatUser.chat', 'chat')
 			.innerJoin('chatUser.user', 'user')
 			.where('user.id = :userId', { userId: identifier })
