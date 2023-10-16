@@ -24,7 +24,9 @@ export class ChatController {
   }
 
   @Get(':identifier')
-  async findOne(@Param('identifier') identifier: string) {
+  async findOne(
+    @Param('identifier') identifier: string
+  ) {
     return this.chatService.findOnePlain(identifier);
   }
 
@@ -39,17 +41,24 @@ export class ChatController {
     return this.chatService.create(createChatDto, user);
   }
 
-  @Patch(':id')
+  @Patch(':identifier')
   update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('identifier') identifier: string,
     @GetUser() user: User,
-    @Body() updateChatDto: UpdateChatDto
+    @Body() updateChatDto: UpdateChatDto,
   ){
-    // return this.chatService.update(id, updateChatDto, user);
+    return this.chatService.update(identifier, updateChatDto, user);
   }
+  // @Patch(':identifier')
+  // update(@Param() params: any) {
+  //   console.log(params);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    return this.chatService.remove(id);
+  @Delete(':identifier')
+  remove(
+    @Param('identifier') identifier: string,
+    @GetUser() user: User,
+  ) {
+    return this.chatService.remove(identifier, user);
   }
 }

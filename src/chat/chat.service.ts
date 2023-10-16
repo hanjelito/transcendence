@@ -1,4 +1,4 @@
-import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate as isUUID } from 'uuid';
@@ -98,7 +98,7 @@ export class ChatService {
 
 			if (existingChat) {
 				if(existingChat.password != createChatDto.password )
-				throw new CustomHttpException('', false, `Chat	${existingChat.name} have a password is not similar`, HttpStatus.BAD_REQUEST);
+					throw new CustomHttpException('', false, `Chat	${existingChat.name} have a password is not similar`, HttpStatus.BAD_REQUEST);
 					// throw new NotFoundException(`Chat	${existingChat.name} have a password is not similar`);
 				chatUser.chatId = existingChat.id;
 			} else {
@@ -129,76 +129,109 @@ export class ChatService {
 
 	async update(id: string, updateChatDto: UpdateChatDto, user: User)
 	{
-
-		const { chatUser, ...toUpdate } = updateChatDto;
-
-		const chat = await this.chatRepository.preload({ id, ...toUpdate });
-			
-		if (!chat) throw new NotFoundException(`Chat with id	${ id } not found`);
-
-		// create query runner
-		const queryRunner = this.readonly.createQueryRunner();
-		// establecer conexion con la base de datos 
-		await queryRunner.connect();
-		// hace la transaccion en el caso que falle hace rollback
-		await queryRunner.startTransaction();
-
+		if (!isUUID(id))
+      		throw new NotFoundException(`The id	${ id } is no UUID`);
 		try {
+			const foundChannel = await this.chatRepository.findOne({ where: { id: id } });
+			if (!foundChannel)
+				throw new NotFoundException(`Channel with ID ${id} no found`);
 
-			if ( chatUser )
-			{
-				// eliminar las imagenes anteriores
-				// await queryRunner.manager.delete( ChatUser, { chat: { id } });
-
-				// chat.chatUser = chatUser.map(
-				//	 image => this.chatUsersRepository.create()
-				// );
+			const chatUser: any = await this.chatUsersRepository.findOne({
+				where: {
+					chat: { id: id },
+					user: { id: user.id }
+				}
+			});
+		
+			if( chatUser && chatUser.rol === "user"){
+				throw new HttpException('You do not have access to change channel privileges', HttpStatus.FORBIDDEN);
 			}
 
-			chat.user = user;
-
-			await queryRunner.manager.save(chat);
-
-			// await this.chatRepository.save(chat);
-			await queryRunner.commitTransaction();
-			await queryRunner.release();
-
-			return this.findOnePlain( id );
+			Object.assign(foundChannel, updateChatDto);
+			const channelModificate: any = await this.chatRepository.save(foundChannel);
+			
+			cleanSensitiveUserData(channelModificate.user);
+			channelModificate.chatUser.forEach(chatUser => cleanSensitiveUserData(chatUser.user));			
+			return channelModificate;
 
 		} catch (error) {
-			await queryRunner.rollbackTransaction();
-			await queryRunner.release();
-			this.handleDBExceptions(error);
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			if (error.code === '23505') {
+				throw new ConflictException('El recurso ya existe o está duplicado.');
+			  }
+			  throw new InternalServerErrorException(); 
 		}
 	}
 
-	async remove(id: string)
-	{
-		const Chat = await this.chatRepository.findOneBy( { id } );
+	// async remove(id: string, user: User)
+	// {
+	// 	if (!isUUID(id))
+    //   		throw new NotFoundException(`The id	${ id } is no UUID`);
+	// 	const Chat = await this.chatRepository.findOneBy( { id } );
+	// 	if (!Chat) {
+	// 		throw new NotFoundException(`Chat with id	${ id } not found`);
+	// 	}
+
+	// 	cleanSensitiveUserData(Chat.user);
+	// 	Chat.chatUser.forEach(chatUser => cleanSensitiveUserData(chatUser.user));	
+	// 	return Chat;
+
+	// 	// await this.chatRepository.remove(Chat);
+	// }
+
+	async remove(id: string, user: User) {
+		if (!isUUID(id))
+			throw new NotFoundException(`The id ${id} is no UUID`);
+		
+		const Chat = await this.chatRepository.findOneBy({ id });
 		if (!Chat) {
-			throw new NotFoundException(`Chat with id	${ id } not found`);
+			throw new NotFoundException(`Chat with id ${id} not found`);
 		}
-		await this.chatRepository.remove(Chat);
+	
+		// Encuentra al usuario solicitante en el chat
+		const requestingUser = Chat.chatUser.find(chatUser => chatUser.user.id === user.id);
+		if (!requestingUser) {
+			throw new NotFoundException('No eres parte de este chat.');
+		}
+	
+		// Si el usuario solicitante es admin
+		if (requestingUser.rol === 'admin') {
+			// Verificar si hay otros usuarios en el grupo
+			const otherUsers = Chat.chatUser.filter(chatUser => chatUser.user.id !== user.id);
+			if (otherUsers.length === 0) {
+				await this.chatRepository.remove(Chat);
+				return;
+			}
+	
+			// Si hay un moderador, cambiamos su rol a admin
+			const moderator = otherUsers.find(chatUser => chatUser.rol === 'moderator');
+			if (moderator) {
+				moderator.rol = 'admin';
+				await this.chatUsersRepository.save(moderator);
+			} else {
+				// Si no hay moderador, hacemos admin al usuario más antiguo
+				otherUsers.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+				otherUsers[0].rol = 'admin';
+				await this.chatUsersRepository.save(otherUsers[0]);
+			}
+		}
+	
+		// Independientemente del rol, eliminamos al usuario solicitante del chat
+		await this.chatUsersRepository.remove(requestingUser);
 	}
+	
 
-	private handleDBExceptions(error: any) {
-		if (error.code === '23505')
-			throw new BadRequestException(error.detail);
-		this.logger.error(error);
-		throw new InternalServerErrorException('Unexpected error, check server logs');
-	}
+}
 
-	async deleteAllChats()
-	{
-		const query = this.chatRepository.createQueryBuilder();
-		try {
-			return await query
-			.delete()
-			.where({})
-			.execute();
-		}
-		catch (error) {
-			this.handleDBExceptions(error);
-		}
-	}
+// function services:
+function cleanSensitiveUserData(user: any) {
+	delete user.password;
+	delete user.isActive;
+	delete user.twoFASecret;
+	delete user.images;
+	delete user.roles;
+	delete user.first_time;
+	delete user.email;
 }

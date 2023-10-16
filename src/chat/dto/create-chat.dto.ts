@@ -39,8 +39,6 @@ export class CreateChatDto {
 	})
 	@IsString()
 	@IsOptional()
-	@MinLength(5)
-	@MaxLength(10)
 	password: string;
 
 	// size: string[];
