@@ -1,12 +1,17 @@
 import { Module } from '@nestjs/common';
-import { ContactService } from './contact.service';
-import { ContactController } from './contact.controller';
-import { User } from 'src/user/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from 'src/auth/auth.module';
+
+import { ContactController } from './contact.controller';
+import { ContactService } from './contact.service';
 import { ExceptionService } from 'src/services/exception.service';
-import { Contact } from './entities/contact.entity';
 import { SocketManagerService } from '../message-ws/services/socketManager-ws.service';
+
+
+import { User } from 'src/user/entities/user.entity';
+
+import { AuthModule } from 'src/auth/auth.module';
+import { Contact } from './entities/contact.entity';
+import { ContactUserBlock } from './entities/contactUserBlock.entity';
 
 @Module({
   controllers: [ContactController],
@@ -16,7 +21,7 @@ import { SocketManagerService } from '../message-ws/services/socketManager-ws.se
     SocketManagerService
   ],
   imports: [
-    TypeOrmModule.forFeature([Contact, User]),
+    TypeOrmModule.forFeature([Contact, ContactUserBlock, User]),
     //muy importante para usar el auth() en el controller
     AuthModule,
   ],

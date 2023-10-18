@@ -9,6 +9,7 @@ import { Chat } from "../../chat/entities";
 import { ChatUser } from "../../chat-user/entities/chat-user.entity";
 import { Contact } from "../../contact/entities/contact.entity";
 import { GamesUser} from "../../games _user/entities/gamesuser.entity";
+import { ContactUserBlock } from "src/contact/entities/contactUserBlock.entity";
 
 // @Entity() define la clase como una entidad de TypeORM.
 // Clase User que representa la entidad de usuario en la base de datos.
@@ -164,6 +165,12 @@ export class User {
 		cascade: true,
 	})
   	contacts: Contact[];
+
+	
+	@OneToMany(() => ContactUserBlock, contactUserBlock => contactUserBlock.user, {
+		cascade: true,
+	})
+	blocks: ContactUserBlock[];
 
 	// Método que se ejecuta antes de insertar un nuevo registro de usuario en la base de datos.
 	// Convierte el email a minúsculas.

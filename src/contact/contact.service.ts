@@ -8,7 +8,8 @@ import { DeleteContactDto } from './dto/delete-contact.dto';
 import { Contact } from './entities/contact.entity';
 import { User } from '../user/entities/user.entity';
 import { isUUID } from 'class-validator';
-import { UpdateContactDto } from './dto/update-contact.dto';
+import { UpdateContactUserBlockDto } from './dto/block_user/update-contactUserBlock.dto';
+import { ContactUserBlock } from './entities/contactUserBlock.entity';
 
 @Injectable()
 export class ContactService {
@@ -16,6 +17,7 @@ export class ContactService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Contact) private contactRepository: Repository<Contact>,
+    @InjectRepository(ContactUserBlock) private contacUserBlocktRepository: Repository<ContactUserBlock>,
     private exceptionService: ExceptionService
   ) {}
   
@@ -128,33 +130,76 @@ export class ContactService {
       }
     }
   }
+  // block
+  async getBlockedUsers(user: User): Promise<ContactUserBlock[]> {
+    console.log("UserID:", user.id);  // Verificar el ID del usuario
 
-  async update(updateContactDto: UpdateContactDto, user: User)
-  {
-    console.log("entrante:", updateContactDto, user.id);
-    try {
-      const contact: any = await this.contactRepository.findOne({
+    const blockedUsers: any = await this.contacUserBlocktRepository.find({
         where: {
-          user: { id: user.id },
-          contact: { id: updateContactDto.contactId },
+            user: { id: user.id },
+        },
+        relations: ['block'],
+    });
+
+    blockedUsers.forEach((blockRecord: any) => cleanSensitiveUserData(blockRecord.block)); // Limpia cada usuario bloqueado
+
+    return blockedUsers;
+  }
+
+  async updateContactUserBlock(updateContactUserBlockDto: UpdateContactUserBlockDto, user: User) {
+    try {
+      if (!isUUID(updateContactUserBlockDto.blockId))
+            throw new NotFoundException(`Contact with id ${updateContactUserBlockDto.blockId} not founds`);
+      
+
+      if (user.id === updateContactUserBlockDto.blockId) {
+          throw new BadRequestException("You cannot block yourself.");
+      }
+
+      const existingBlock = await this.contacUserBlocktRepository.findOne({
+        where: {
+            user: { id: user.id },
+            block: { id: updateContactUserBlockDto.blockId },
         }
       });
-      if(!contact)
-        throw new NotFoundException(`Channel with ID ${updateContactDto.contactId} no found`);
-      Object.assign(contact, updateContactDto);
-      const contactModificate: any = await this.contactRepository.save(contact);
 
-      return contactModificate;
+      // Check for negative seconds and delete block if exists
+      if (updateContactUserBlockDto.seconds < 0) {
+          if (existingBlock) {
+              await this.contacUserBlocktRepository.remove(existingBlock);
+          }
+          return { message: 'Block removed or not found.' };
+      }
 
+      const now = new Date();
+
+      const blockEndDate = new Date(now.getTime() + updateContactUserBlockDto.seconds * 1000);
+
+      let block;
+      if (existingBlock) {
+          existingBlock.blockedAt = blockEndDate;
+          block = existingBlock;
+      } else {
+          block = this.contacUserBlocktRepository.create({
+            user: user,
+            block: { id: updateContactUserBlockDto.blockId },
+            blockedAt: blockEndDate,
+          });
+      }
+      const savedBlock = await this.contacUserBlocktRepository.save(block);
+
+      delete savedBlock.user;
+      return savedBlock;
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
-        this.exceptionService.handleNotFoundException('Contact not found', `Contact with id not found.`);
+          this.exceptionService.handleNotFoundException('Contact not found', `Contact with id not found.`);
       } else {
-        this.exceptionService.handleDBExceptions(error);
+          this.exceptionService.handleDBExceptions(error);
       }
     }
   }
 
+  
   async remove(deleteContactDto: DeleteContactDto, user: User) {
     try {
         const { contactId } = deleteContactDto;
@@ -194,4 +239,14 @@ export class ContactService {
         }
     }
   }
+}
+
+function cleanSensitiveUserData(user: any) {
+	delete user.password;
+	delete user.isActive;
+	delete user.twoFASecret;
+	delete user.images;
+	delete user.roles;
+	delete user.first_time;
+	delete user.email;
 }
