@@ -15,4 +15,10 @@ export class CreateContactDto {
 	})
 	@IsNotEmpty()
 	contactId: string;
+	
+	@ApiProperty({
+		example: 'false',
+    	description: 'blocked contact',
+	})
+	blocked?: boolean;
 }

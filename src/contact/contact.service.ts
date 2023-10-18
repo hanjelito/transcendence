@@ -8,6 +8,7 @@ import { DeleteContactDto } from './dto/delete-contact.dto';
 import { Contact } from './entities/contact.entity';
 import { User } from '../user/entities/user.entity';
 import { isUUID } from 'class-validator';
+import { UpdateContactDto } from './dto/update-contact.dto';
 
 @Injectable()
 export class ContactService {
@@ -124,6 +125,32 @@ export class ContactService {
           this.exceptionService.handleNotFoundException('Contact not found', `Contact with id not found.`);
       } else {
           this.exceptionService.handleDBExceptions(error);
+      }
+    }
+  }
+
+  async update(updateContactDto: UpdateContactDto, user: User)
+  {
+    console.log("entrante:", updateContactDto, user.id);
+    try {
+      const contact: any = await this.contactRepository.findOne({
+        where: {
+          user: { id: user.id },
+          contact: { id: updateContactDto.contactId },
+        }
+      });
+      if(!contact)
+        throw new NotFoundException(`Channel with ID ${updateContactDto.contactId} no found`);
+      Object.assign(contact, updateContactDto);
+      const contactModificate: any = await this.contactRepository.save(contact);
+
+      return contactModificate;
+
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        this.exceptionService.handleNotFoundException('Contact not found', `Contact with id not found.`);
+      } else {
+        this.exceptionService.handleDBExceptions(error);
       }
     }
   }

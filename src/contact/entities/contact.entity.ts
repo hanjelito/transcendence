@@ -33,4 +33,3 @@ export class Contact {
 	@JoinColumn({name: "contactId"})
 	contact: User;
 }
-

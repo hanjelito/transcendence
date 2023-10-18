@@ -165,22 +165,6 @@ export class ChatService {
 		}
 	}
 
-	// async remove(id: string, user: User)
-	// {
-	// 	if (!isUUID(id))
-    //   		throw new NotFoundException(`The id	${ id } is no UUID`);
-	// 	const Chat = await this.chatRepository.findOneBy( { id } );
-	// 	if (!Chat) {
-	// 		throw new NotFoundException(`Chat with id	${ id } not found`);
-	// 	}
-
-	// 	cleanSensitiveUserData(Chat.user);
-	// 	Chat.chatUser.forEach(chatUser => cleanSensitiveUserData(chatUser.user));	
-	// 	return Chat;
-
-	// 	// await this.chatRepository.remove(Chat);
-	// }
-
 	async remove(id: string, user: User) {
 		if (!isUUID(id))
 			throw new NotFoundException(`The id ${id} is no UUID`);
