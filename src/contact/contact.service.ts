@@ -132,8 +132,6 @@ export class ContactService {
   }
   // block
   async getBlockedUsers(user: User): Promise<ContactUserBlock[]> {
-    console.log("UserID:", user.id);  // Verificar el ID del usuario
-
     const blockedUsers: any = await this.contacUserBlocktRepository.find({
         where: {
             user: { id: user.id },
