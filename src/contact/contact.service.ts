@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { EntityNotFoundError, Repository } from 'typeorm';
+import { EntityNotFoundError, MoreThan, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { ExceptionService } from '../services/exception.service';
@@ -131,15 +131,19 @@ export class ContactService {
     }
   }
   // block
+
   async getBlockedUsers(user: User): Promise<ContactUserBlock[]> {
+    const currentDate = new Date();
+
     const blockedUsers: any = await this.contacUserBlocktRepository.find({
         where: {
             user: { id: user.id },
+            blockedAt: MoreThan(currentDate)
         },
         relations: ['block'],
     });
 
-    blockedUsers.forEach((blockRecord: any) => cleanSensitiveUserData(blockRecord.block)); // Limpia cada usuario bloqueado
+    blockedUsers.forEach((blockRecord: any) => cleanSensitiveUserData(blockRecord.block));
 
     return blockedUsers;
   }

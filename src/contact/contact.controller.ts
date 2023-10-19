@@ -19,20 +19,19 @@ export class ContactController {
 
   // block
 
-  @Get('/block-user')
-  getBlockedUsers(
-    @GetUser() user: User,
-  ) {
-    console.log(user.id);
-    return this.contactService.getBlockedUsers(user);
-  }
-
   @Patch('/block-user')
   updateContactUserBlock(
     @Body() updateContactUserBlockDto: UpdateContactUserBlockDto,
     @GetUser() user: User,
   ) {
     return this.contactService.updateContactUserBlock(updateContactUserBlockDto, user);
+  }
+  
+  @Get('/block-user')
+  getBlockedUsers(
+    @GetUser() user: User,
+  ) {
+    return this.contactService.getBlockedUsers(user);
   }
   //
 
