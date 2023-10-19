@@ -88,11 +88,6 @@ export class Chat {
 	)
 	user: User;
 	
-
-	// @Column('text', {
-	// 	array: true,
-	// })
-	// size: string[];
 	@BeforeInsert()
 	checkSlugIsert() {
 		if (!this.slug) {

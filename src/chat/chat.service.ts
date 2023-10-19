@@ -165,7 +165,41 @@ export class ChatService {
 		}
 	}
 
-	async remove(id: string, user: User) {
+	async remove(id: string, user: User): Promise<void> {
+		try {
+			if (user.roles.some(role => role === 'super-user' || role === 'admin')) {
+				const result = await this.chatRepository.delete(id);
+				if (result.affected === 0) {
+					throw new NotFoundException(`Chat with ID "${id}" not found`);
+				}
+				return;
+			}
+	
+			const Chat = await this.chatRepository.findOne({ where: { id: id }, relations: ["chatUser"] });
+			if (!Chat) {
+				throw new NotFoundException(`Chat with ID "${id}" not found`);
+			}
+	
+			const requestingUser = Chat.chatUser.find(chatUser => chatUser.user.id === user.id);
+			if (!requestingUser) {
+				throw new NotFoundException('No eres parte de este chat.');
+			}
+	
+			if (requestingUser.rol !== 'admin') {
+				throw new NotFoundException('No eres admin de este chat.');
+			}
+	
+			await this.chatRepository.delete(id);
+	
+		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new InternalServerErrorException(); 
+		}
+	}
+
+	async chatOut(id: string, user: User) {
 		if (!isUUID(id))
 			throw new NotFoundException(`The id ${id} is no UUID`);
 		

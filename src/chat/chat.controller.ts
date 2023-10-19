@@ -17,8 +17,6 @@ export class ChatController {
 
   @Get()
   @Auth(ValidRoles.user)
-  // TODO: Puede llevar independientemente de la autenticación
-  // @Auth(ValidRoles.admin)
   findAll(@Query() paginationDto: PaginationDto) {
     return this.chatService.findAll( paginationDto );
   }
@@ -64,5 +62,14 @@ export class ChatController {
     @GetUser() user: User,
   ) {
     return this.chatService.remove(identifier, user);
+  }
+
+  @Delete('chat-out/:identifier')
+  @Auth(ValidRoles.user)
+  chatOut(
+    @Param('identifier') identifier: string,
+    @GetUser() user: User,
+  ) {
+    return this.chatService.chatOut(identifier, user);
   }
 }
