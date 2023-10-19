@@ -73,7 +73,7 @@ export class UserController {
       throw error;
     }
   }
-
+  
   @Get('uploads/:filename')
   // @Auth(ValidRoles.admin)
   viewUploadedFile(@Param('filename') filename, @Res() res: Response) {

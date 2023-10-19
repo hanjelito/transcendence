@@ -6,37 +6,39 @@ import { GamesService } from './games.service';
 //import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Games')
-@Auth(ValidRoles.admin)
 @Controller('games')
 export class GamesController {
     constructor(
         private readonly gamesService: GamesService,
     ) {}
     @Post()
+    @Auth(ValidRoles.user)
     create(@Body() createGameDto: any) {
         return this.gamesService.create(createGameDto);
     }
 
     @Get()
+    @Auth(ValidRoles.user)
     findAll() {
       return ("test")
       return this.gamesService.findAll();
     }
 
     @Get('listlivegames')
+    @Auth(ValidRoles.user)
     liveGamesList() {
       return this.gamesService.liveGamesList();
     }
 
     @Get('roomwaiting')
+    @Auth(ValidRoles.user)
     waitingRoom() {
       return (this.gamesService.waitingRoom());
     }
 
     @Get(':id')
+    @Auth(ValidRoles.user)
     findBy(@Param('id') id: string) {
       return this.gamesService.findBy(id);
     }
-
-
 }

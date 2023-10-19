@@ -10,7 +10,6 @@ import { User } from 'src/user/entities/user.entity';
 import { GetUser } from 'src/auth/decorators';
 
 @ApiTags('Contact')
-@Auth(ValidRoles.admin)
 @Controller('contact')
 export class ContactController {
   constructor(
@@ -20,6 +19,7 @@ export class ContactController {
   // block
 
   @Patch('/block-user')
+  @Auth(ValidRoles.user)
   updateContactUserBlock(
     @Body() updateContactUserBlockDto: UpdateContactUserBlockDto,
     @GetUser() user: User,
@@ -28,6 +28,7 @@ export class ContactController {
   }
   
   @Get('/block-user')
+  @Auth(ValidRoles.user)
   getBlockedUsers(
     @GetUser() user: User,
   ) {
@@ -36,6 +37,7 @@ export class ContactController {
   //
 
   @Post()
+  @Auth(ValidRoles.user)
   create(
     @Body() createContactDto: CreateContactDto,
     @GetUser() user: User,
@@ -43,37 +45,25 @@ export class ContactController {
     return this.contactService.create(createContactDto, user);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.contactService.findAll();
-  // }
-
   @Get(':id')
+  @Auth(ValidRoles.user)
   findOne(@Param('id') id: string) {
     return this.contactService.findOne(id);
   }
 
   @Get('dual/:id')
+  @Auth(ValidRoles.user)
   findOneDual(@Param('id') id: string) {
     return this.contactService.findOneDual(id);
   }
 
-  // @Patch()
-  // update(
-  //   @Body() updateContactDto: UpdateContactDto,
-  //   @GetUser() user: User,
-  // ) {
-  //   return this.contactService.update(updateContactDto, user);
-  // }
-
   @Delete()
+  @Auth(ValidRoles.user)
   remove(
     @Body() deleteContactDto: CreateContactDto,
     @GetUser() user: User,
   ) {
     return this.contactService.remove(deleteContactDto, user);
   }
-
-  
 }
 

@@ -10,13 +10,14 @@ import { ChatUser } from './entities/chat-user.entity';
 
 @ApiTags('User Chat - Channels')
 @Controller('chat-user')
-@Auth(ValidRoles.user)
+// @Auth(ValidRoles.user)
 export class ChatUserController {
   constructor(private readonly chatUserService: ChatUserService) {}
 
 
 
   @Post()
+  @Auth(ValidRoles.user)
   @ApiResponse({ status: 201, description: 'Chat User was Created', type: ChatUser })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 403, description: 'Forbidden, Token related' })
@@ -27,39 +28,22 @@ export class ChatUserController {
     return this.chatUserService.create(createChatUserDto, user);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.chatUserService.findAll();
-  // }
 
   @Get('find-chats-iduser/:identifier')
+  @Auth(ValidRoles.user)
   findOne(@Param('identifier') identifier: string) {
     return this.chatUserService.findOneChatUserByIdentifier(identifier);
   }
 
   @Get('find-chatsid-detail-user/:identifier')
+  @Auth(ValidRoles.user)
   findOneChatUserByIdentifierDetail(@Param('identifier') identifier: string) {
     return this.chatUserService.findOneChatUserByIdentifierDetail(identifier);
   }
 
   @Get('find-to-idchat/:identifier')
+  @Auth(ValidRoles.user)
   findOneByIdentifier(@Param('identifier') identifier: string) {
     return this.chatUserService.findAllChatsByUserId(identifier);
   }
-
-
-  // @Get(':identifier')
-  //   findOneByIdentifier(@Param('identifier') identifier: string) {
-  //   return this.chatUserService.findOneChatUserByIdentifier(identifier);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateChatUserDto: UpdateChatUserDto) {
-  //   return this.chatUserService.update(+id, updateChatUserDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.chatUserService.remove(+id);
-  // }
 }

@@ -12,11 +12,11 @@ import { Chat } from './entities';
 
 @ApiTags('Chat')
 @Controller('chat')
-@Auth(ValidRoles.admin)
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get()
+  @Auth(ValidRoles.user)
   // TODO: Puede llevar independientemente de la autenticación
   // @Auth(ValidRoles.admin)
   findAll(@Query() paginationDto: PaginationDto) {
@@ -24,6 +24,7 @@ export class ChatController {
   }
 
   @Get(':identifier')
+  @Auth(ValidRoles.user)
   async findOne(
     @Param('identifier') identifier: string
   ) {
@@ -31,6 +32,7 @@ export class ChatController {
   }
 
   @Post()
+  @Auth(ValidRoles.user)
   @ApiResponse({ status: 201, description: 'Chat was Created', type: Chat })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 403, description: 'Forbidden, Token related' })
@@ -42,6 +44,7 @@ export class ChatController {
   }
 
   @Patch(':identifier')
+  @Auth(ValidRoles.user)
   update(
     @Param('identifier') identifier: string,
     @GetUser() user: User,
@@ -55,6 +58,7 @@ export class ChatController {
   // }
 
   @Delete(':identifier')
+  @Auth(ValidRoles.user)
   remove(
     @Param('identifier') identifier: string,
     @GetUser() user: User,
