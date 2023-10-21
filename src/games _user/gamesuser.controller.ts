@@ -9,19 +9,28 @@ import { GamesUserService } from './gamesuser.service';
 @Auth(ValidRoles.admin)
 @Controller('gamesuser')
 export class GamesUserController {
-    constructor(private readonly gamesUserService: GamesUserService) {}
-    @Post()
-    create(@Body() createGameDto: any) {
-        return this.gamesUserService.create(createGameDto);
-    }
+  constructor(private readonly gamesUserService: GamesUserService) {}
+  @Post()
+  create(@Body() createGameDto: any) {
+      return this.gamesUserService.create(createGameDto);
+  }
 
-    @Get()
-    findAll() {
-      return this.gamesUserService.findAll();
-    }
-    
-    @Get(':id')
-    findBy(@Param('id') id: string) {
-      return this.gamesUserService.findBy(id);
-    }
+  @Get()
+  findAll() {
+    return this.gamesUserService.findAll();
+  }
+  
+  @Get(':id')
+  findBy(@Param('id') id: string) {
+    return this.gamesUserService.findBy(id);
+  }
+
+    //new stats chat:
+  @Get('chat-stats/:identifier')
+  @Auth(ValidRoles.user)
+  findByUser(
+    @Param('identifier') identifier: string,
+  ) {
+    return this.gamesUserService.findByUser(identifier);
+  }
 }

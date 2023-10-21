@@ -82,10 +82,56 @@ export class GamesUserService {
           //  "user.name": "ASC",
           //  "user.id": "DESC", 
           // })
-          console.log(data)
           return data
     } catch (error) {
           this.exceptionService.handleDBExceptions(error);
     }
+  }
+  //new stats chat:
+  async findByUser(userId: string) {
+      try {
+          // Primera consulta: Resumen
+          const summaryData = await this.gamesuserRepository.createQueryBuilder("gamesUser")
+              .select([
+                  "SUM(gamesUser.ptos) as Ptos",
+                  "SUM(gamesUser.win) as Wins",
+                  "SUM(gamesUser.los) as Loses",
+                  "SUM(gamesUser.tid) as Tides",
+                  "SUM(gamesUser.goalf) as GF",
+                  "SUM(gamesUser.goalc) as GC",
+                  "user.id as userId",
+                  "user.login as userLogin"
+              ])
+              .innerJoin("gamesUser.id", "user")
+              .where("user.id = :userId", { userId: userId })
+              .groupBy("user.id")
+              .orderBy({
+                  "SUM(gamesUser.ptos)": "DESC"
+              })
+              .getRawOne();
+  
+          // Segunda consulta: Detalle de los juegos
+          const detailedData = await this.gamesuserRepository.createQueryBuilder("gamesUser")
+              .select([
+                  "gamesUser.nick as opponentNick",
+                  "gamesUser.goalf as goalsFor",
+                  "gamesUser.goalc as goalsAgainst",
+                  "CASE WHEN gamesUser.win = 1 THEN 'Win' WHEN gamesUser.los = 1 THEN 'Lost' ELSE 'Tied' END as result"
+              ])
+              .where("gamesUser.id = :userId", { userId: userId })
+              .orderBy("gamesUser.timestamp", "DESC")
+              .getRawMany();
+  
+          // Combinar ambos resultados
+          const combinedData = {
+              ...summaryData,
+              gameDetails: detailedData
+          };
+  
+          return combinedData;
+  
+      } catch (error) {
+          this.exceptionService.handleDBExceptions(error);
+      }
   }
 }

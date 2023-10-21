@@ -41,4 +41,20 @@ export class GamesController {
     findBy(@Param('id') id: string) {
       return this.gamesService.findBy(id);
     }
+    //char stats:
+    @Get('stats-chat/:id')
+    @Auth(ValidRoles.user)
+    findPlayerGameDetails(
+      @Param('id') id: string
+    ){
+      return this.gamesService.findPlayerGameDetails(id);
+    }
+
+    @Get('stats-chat-general/:id')
+    @Auth(ValidRoles.user)
+    getPlayerStats(
+      @Param('id') id: string
+    ){
+      return this.gamesService.getPlayerStats(id);
+    }
 }
