@@ -20,7 +20,7 @@ export class GamesController {
     @Get()
     @Auth(ValidRoles.user)
     findAll() {
-      return ("test")
+      // return ("test")
       return this.gamesService.findAll();
     }
 

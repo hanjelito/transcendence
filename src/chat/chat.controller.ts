@@ -31,9 +31,9 @@ export class ChatController {
 
   @Post()
   @Auth(ValidRoles.user)
-  @ApiResponse({ status: 201, description: 'Chat was Created', type: Chat })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 403, description: 'Forbidden, Token related' })
+  // @ApiResponse({ status: 201, description: 'Chat was Created', type: Chat })
+  // @ApiResponse({ status: 400, description: 'Bad request' })
+  // @ApiResponse({ status: 403, description: 'Forbidden, Token related' })
   create(
     @Body() createChatDto: any,
     @GetUser() user: User,

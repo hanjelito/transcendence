@@ -6,21 +6,23 @@ import { GamesUserService } from './gamesuser.service';
 //import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Games-User')
-@Auth(ValidRoles.admin)
 @Controller('gamesuser')
 export class GamesUserController {
   constructor(private readonly gamesUserService: GamesUserService) {}
   @Post()
+  @Auth(ValidRoles.user)
   create(@Body() createGameDto: any) {
       return this.gamesUserService.create(createGameDto);
   }
 
   @Get()
+  @Auth(ValidRoles.user)
   findAll() {
     return this.gamesUserService.findAll();
   }
   
   @Get(':id')
+  @Auth(ValidRoles.user)
   findBy(@Param('id') id: string) {
     return this.gamesUserService.findBy(id);
   }
