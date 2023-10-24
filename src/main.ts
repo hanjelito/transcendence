@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as express from 'express';
 import { AppModule } from './app.module';
 import { CustomExceptionFilter } from './filters/custom-exception.filter';
 import { TokenErrorFilter } from './filters/token-error';
