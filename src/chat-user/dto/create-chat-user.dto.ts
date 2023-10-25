@@ -1,13 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString} from 'class-validator';
+import { IsNotEmpty, IsOptional} from 'class-validator';
 
 export class CreateChatUserDto {
 
-//   @ApiProperty({
-// 		description: 'Chat_user Url',
-//     required: false,
-// 		minLength: 6,
-// 	})
 
   @ApiProperty({
 		description: 'Id of the chat',
@@ -18,5 +13,13 @@ export class CreateChatUserDto {
   @ApiProperty({
 		description: 'Id of the chat',
 	})
-  rol: string;
+  @IsOptional()
+  rol?: string;
+
+  @ApiProperty({
+		description: 'Silence the user in the chat',
+    default: 'false'
+	})
+  @IsOptional()
+  silence?: boolean;
 }

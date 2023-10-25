@@ -43,6 +43,13 @@ export class ChatUser
     rol: string;
 
 	@ApiProperty({
+        example: 'false',
+        description: 'Silence the user in the chat',
+    })
+    @Column({ type: 'boolean', default: 'false' })
+    silence: boolean;
+
+	@ApiProperty({
         example: '2023-09-24T12:34:56.000Z',
         description: 'Creation date',
     })

@@ -7,14 +7,22 @@ import { Auth, ValidRoles } from '../auth/interfaces';
 import { GetUser } from 'src/auth/decorators';
 import { User } from 'src/user/entities/user.entity';
 import { ChatUser } from './entities/chat-user.entity';
+import { UpdateChatUserDto } from './dto/update-chat-user.dto';
 
 @ApiTags('User Chat - Channels')
 @Controller('chat-user')
-// @Auth(ValidRoles.user)
 export class ChatUserController {
   constructor(private readonly chatUserService: ChatUserService) {}
 
-
+  @Patch('silence/:userIdSilence')
+  @Auth(ValidRoles.user)
+  updateSilence(
+    @Param('userIdSilence') userIdSilence: string,
+    @Body() updateChatUserDto: CreateChatUserDto, // Asegúrate de que esta es la importación correcta
+    @GetUser() user: User,
+  ) {
+    return this.chatUserService.updateSilence(userIdSilence, updateChatUserDto, user);
+  };
 
   @Post()
   @Auth(ValidRoles.user)
@@ -46,4 +54,6 @@ export class ChatUserController {
   findOneByIdentifier(@Param('identifier') identifier: string) {
     return this.chatUserService.findAllChatsByUserId(identifier);
   }
+
+  
 }

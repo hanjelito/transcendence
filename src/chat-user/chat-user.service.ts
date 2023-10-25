@@ -9,6 +9,8 @@ import { User } from '../user/entities/user.entity';
 import { Chat } from '../chat/entities';
 import { ChatUser } from './entities/chat-user.entity';
 import { ExceptionService } from '../services/exception.service';
+import { UUID } from 'typeorm/driver/mongodb/bson.typings';
+import { UpdateChatUserDto } from './dto/update-chat-user.dto';
 
 @Injectable()
 export class ChatUserService {
@@ -174,6 +176,61 @@ export class ChatUserService {
 			};
 		}
 		return null;
+	}
+
+	async updateSilence(userIdSilence: string, updateChatUserDto: UpdateChatUserDto, user: User) {
+		try {
+			const { chatId, ...chatUserDetails } = updateChatUserDto;
+			
+			if (!isUUID(userIdSilence))
+				throw new NotFoundException(`Chat with id ${userIdSilence} not founds`);
+
+			if (!isUUID(chatId))
+				throw new NotFoundException(`Chat with id ${chatId} not founds`);
+		
+			const chatUser: UpdateChatUserDto = await this.chatUsersRepository.findOneBy(
+				{
+					chat: { id: chatId },
+					user: { id: user.id }
+				}
+			);
+		
+			if (!chatUser) 
+				throw new NotFoundException(`Chat with id ${chatId} not found`);
+		
+			if (chatUser.rol != 'admin' && chatUser.rol != 'moderator')
+				throw new NotFoundException(`The user ${user.name} is not admin or moderator`);
+
+			const chatUserSilence = await this.chatUsersRepository.update(
+				{
+					chat: { id: chatId },
+					user: { id: userIdSilence }
+				}, 
+				{ silence: true }
+			);
+			
+
+			if (!chatUserSilence)
+				throw new NotFoundException(`Chat with id ${userIdSilence} not found`);
+
+			console.log(chatUserSilence);
+
+			return {
+				message: "Silence user",
+				status: true,
+				channel: chatUserSilence
+			};
+
+		} catch (error) {
+			console.log(error);
+			// si el error es de tipo EntityNotFoundError, lanzar un error 404
+			if (error instanceof EntityNotFoundError) {
+				this.exceptionService.handleNotFoundException('Chat not found', `Chat with id not found.`);
+			} else {
+				// si no, lanzar un error
+				this.exceptionService.handleDBExceptions(error);
+			}
+		}
 	}
 
 
