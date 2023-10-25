@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EntityNotFoundError, Equal, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isUUID } from 'class-validator';
@@ -11,6 +11,7 @@ import { ChatUser } from './entities/chat-user.entity';
 import { ExceptionService } from '../services/exception.service';
 import { UUID } from 'typeorm/driver/mongodb/bson.typings';
 import { UpdateChatUserDto } from './dto/update-chat-user.dto';
+import { CustomHttpException } from 'src/chat/exceptions/custom-http-exception';
 
 @Injectable()
 export class ChatUserService {
@@ -129,6 +130,7 @@ export class ChatUserService {
 			const chatUserDAta = chatUsers.map(chatUser => ({
 			id: chatUser.id,
 			rol: chatUser.rol,
+			silence: chatUser.silence,
 			created_at: chatUser.created_at,
 			user: {
 				id: chatUser.user.id,
@@ -196,39 +198,36 @@ export class ChatUserService {
 			);
 		
 			if (!chatUser) 
-				throw new NotFoundException(`Chat with id ${chatId} not found`);
+				throw new CustomHttpException('', false, `Chat with id ${chatId} not found`, HttpStatus.BAD_REQUEST);
 		
 			if (chatUser.rol != 'admin' && chatUser.rol != 'moderator')
-				throw new NotFoundException(`The user ${user.name} is not admin or moderator`);
+				throw new CustomHttpException('', false, `The user ${user.name} is not admin or moderator`, HttpStatus.BAD_REQUEST);
 
 			const chatUserSilence = await this.chatUsersRepository.update(
 				{
 					chat: { id: chatId },
 					user: { id: userIdSilence }
 				}, 
-				{ silence: true }
+				{ silence: chatUserDetails.silence }
 			);
 			
 
 			if (!chatUserSilence)
 				throw new NotFoundException(`Chat with id ${userIdSilence} not found`);
 
-			console.log(chatUserSilence);
 
 			return {
-				message: "Silence user",
+				message: "Silence user " + userIdSilence,
 				status: true,
 				channel: chatUserSilence
 			};
 
 		} catch (error) {
-			console.log(error);
-			// si el error es de tipo EntityNotFoundError, lanzar un error 404
-			if (error instanceof EntityNotFoundError) {
-				this.exceptionService.handleNotFoundException('Chat not found', `Chat with id not found.`);
+			// Lanzar una excepción personalizada
+			if (error instanceof CustomHttpException) {
+				throw error;
 			} else {
-				// si no, lanzar un error
-				this.exceptionService.handleDBExceptions(error);
+				throw new CustomHttpException('', false, 'Error silence: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 	}
