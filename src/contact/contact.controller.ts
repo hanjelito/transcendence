@@ -65,5 +65,15 @@ export class ContactController {
   ) {
     return this.contactService.remove(deleteContactDto, user);
   }
+
+  @Get('/block/:idUser/:idBlocked')
+  @Auth(ValidRoles.user)
+  findOneBlock(
+    @Param('idUser') idUser: string,
+    @Param('idBlocked') idBlocked: string,
+
+  ) {
+    return this.contactService.findOneBlock(idUser, idBlocked);
+  }
 }
 

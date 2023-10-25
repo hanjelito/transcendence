@@ -121,4 +121,15 @@ export class MessageWsService {
 			throw error;
 		}
 	}
+	// return contact blockedId
+	async getContactBlockedById(idUser: string, blockedId:string): Promise<boolean>
+	{
+		try {
+			if(idUser)
+				return await this.contactService.findOneBlock(idUser, blockedId);
+			return false;
+		} catch (error) {
+			throw error;
+		}
+	}
 }

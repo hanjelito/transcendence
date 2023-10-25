@@ -248,7 +248,11 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 			else {
 				const idSockets = this.socketManagerService.getClients(params.target);
 				const userDB = await this.messageWsService.getUserFullData(idUser);
-			
+				// is bloqued
+				const isBlocked = await this.messageWsService.getContactBlockedById(params.target, userDB.id);
+				if (isBlocked) {
+					return;
+				}
 				idSockets.forEach(idSocket => {
 					const messageData = {
 						id: params.target,

@@ -241,6 +241,18 @@ export class ContactService {
         }
     }
   }
+  // pass socket io
+  async findOneBlock(idUser: string, idBlocked: string) {
+    const currentDate = new Date();
+    const blocked =  await this.contacUserBlocktRepository.findOne({
+      where: {
+        user: { id: idUser },
+        block: { id: idBlocked },
+        blockedAt: MoreThan(currentDate)
+      }
+    })
+    return blocked ? true : false;
+  }
 }
 
 function cleanSensitiveUserData(user: any) {
