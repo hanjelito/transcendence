@@ -232,6 +232,61 @@ export class ChatUserService {
 		}
 	}
 
+
+	async updateModerator(userIdModerator: string, updateChatUserDto: UpdateChatUserDto, user: User) {
+		try {
+			const { chatId, ...chatUserDetails } = updateChatUserDto;
+			
+			if (!isUUID(userIdModerator))
+				throw new NotFoundException(`Chat with id ${userIdModerator} not founds`);
+
+			if (!isUUID(chatId))
+				throw new NotFoundException(`Chat with id ${chatId} not founds`);
+		
+			const chatUser: UpdateChatUserDto = await this.chatUsersRepository.findOneBy(
+				{
+					chat: { id: chatId },
+					user: { id: user.id }
+				}
+			);
+		
+			if (!chatUser) 
+				throw new CustomHttpException('', false, `Chat with id ${chatId} not found`, HttpStatus.BAD_REQUEST);
+		
+			if (chatUser.rol != 'admin' && chatUser.rol != 'moderator')
+				throw new CustomHttpException('', false, `The user ${user.name} is not admin or moderator`, HttpStatus.BAD_REQUEST);
+
+			const chatUserSilence = await this.chatUsersRepository.update(
+				{
+					chat: { id: chatId },
+					user: { id: userIdModerator }
+				}, 
+				{ rol: chatUserDetails.rol }
+			);
+			
+
+			if (!chatUserSilence)
+				throw new NotFoundException(`Chat with id ${userIdModerator} not found`);
+
+			return {
+				message: "Silence user " + userIdModerator,
+				status: true,
+				channel: chatUserSilence
+			};
+
+		} catch (error) {
+			// Lanzar una excepción personalizada
+			if (error instanceof CustomHttpException) {
+				throw error;
+			} else {
+				throw new CustomHttpException('', false, 'Error silence: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+	}
+	
+	
+
+
 	async findAllUsersInChat(idChat: string, idUser: string)
 	{
 		try {

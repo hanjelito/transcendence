@@ -18,11 +18,23 @@ export class ChatUserController {
   @Auth(ValidRoles.user)
   updateSilence(
     @Param('userIdSilence') userIdSilence: string,
-    @Body() updateChatUserDto: CreateChatUserDto, // Asegúrate de que esta es la importación correcta
+    @Body() updateChatUserDto: CreateChatUserDto,
     @GetUser() user: User,
   ) {
     return this.chatUserService.updateSilence(userIdSilence, updateChatUserDto, user);
   };
+
+  @Patch('moderator/:userIdModerator')
+  @Auth(ValidRoles.user)
+  updateModerator(
+    @Param('userIdModerator') userIdModerator: string,
+    @Body() updateChatUserDto: CreateChatUserDto,
+    @GetUser() user: User,
+  ) {
+    return this.chatUserService.updateModerator(userIdModerator, updateChatUserDto, user);
+  };
+ 
+
 
   @Get('find-user-in-chat/:idChat/:idUser')
   @Auth(ValidRoles.user)
