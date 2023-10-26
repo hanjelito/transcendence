@@ -31,6 +31,16 @@ export class CreateChatDto {
 	@IsOptional()
 	private: boolean;
 
+
+	@ApiProperty({
+		description: 'Incognito chat in (false)',
+		required: false,
+	})
+	@IsBoolean()
+	@IsOptional()
+	isIncognito: boolean;
+
+
 	slug: string;
 	
 	@ApiProperty({

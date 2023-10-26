@@ -88,6 +88,8 @@ export class ChatService {
 	}
 
 	async create(createChatDto: CreateChatDto, user: User) {
+		const permisosUser = user.roles.some(role => role === 'super-user' || role === 'admin');
+
 		try {
 			const { ...chatDetails } = createChatDto;
 		
@@ -96,11 +98,22 @@ export class ChatService {
 			
 			const chatUser = new CreateChatUserDto();
 
-			if (existingChat) {
-				if(existingChat.password != createChatDto.password )
-					throw new CustomHttpException('', false, `Chat	${existingChat.name} have a password is not similar`, HttpStatus.BAD_REQUEST);
+			if (!existingChat && createChatDto.isIncognito === true){
+				console.log(createChatDto.isIncognito);				
+				throw new CustomHttpException('', false, `Chat ${existingChat.name} does not exist and cannot be joined in incognito mode`, HttpStatus.BAD_REQUEST);
+			}
+			// if (existingChat) {
+			// 	if(existingChat.password != createChatDto.password && (!permisosUser && !createChatDto.isIncognito))
+			// 		throw new CustomHttpException('', false, `Chat	${existingChat.name} have a password is not similar`, HttpStatus.BAD_REQUEST);
 					// throw new NotFoundException(`Chat	${existingChat.name} have a password is not similar`);
-				chatUser.chatId = existingChat.id;
+
+			if (existingChat) {
+				// Si el usuario es admin y (marcó incognito o la contraseña coincide), todo está bien.
+				if (permisosUser && (createChatDto.isIncognito || existingChat.password === createChatDto.password)) {
+					chatUser.chatId = existingChat.id;
+				} else {
+					throw new CustomHttpException('', false, `Chat ${existingChat.name} has a password that does not match`, HttpStatus.BAD_REQUEST);
+				}
 			} else {
 				// Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
 				const chat = new Chat();
@@ -110,10 +123,12 @@ export class ChatService {
 				// Guardar la instancia de Chat en la base de datos
 				const chatBD : Chat = await this.chatRepository.save(chat);
 				chatUser.chatId = chatBD.id;
-				chatUser.rol = 'admin'
+				chatUser.rol =  'admin';
 				existingChat = chatBD;
 			}
-
+			if (permisosUser && createChatDto.isIncognito) {
+				chatUser.rol = 'invisible';
+			}
 			const chatUserBD = await this.chatUserService.create(chatUser, user);
 			return { chat: existingChat, register: chatUserBD.status};
 
