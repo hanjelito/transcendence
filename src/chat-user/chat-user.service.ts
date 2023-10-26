@@ -232,5 +232,37 @@ export class ChatUserService {
 		}
 	}
 
+	async findAllUsersInChat(idChat: string, idUser: string)
+	{
+		try {
+			if (!isUUID(idChat) && !isUUID(idUser))
+				throw new NotFoundException(`Chat with id ${idChat} or id user with id ${idUser} not founds`);
+			const userInChat = await this.chatUsersRepository.findOneBy(
+				{
+					chat: { id: idChat },
+					user: { id: idUser }
+				}
+			);
+			if (!userInChat) 
+				throw new CustomHttpException('', false, `Chat with id ${idChat} not found`, HttpStatus.BAD_REQUEST);
+			cleanSensitiveUserData(userInChat.user);
+			return userInChat;
+		} catch (error) {
+			if (error instanceof CustomHttpException) {
+				throw error;
+			} else {
+				throw new CustomHttpException('', false, 'Error silence: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+	}
+}
 
+function cleanSensitiveUserData(user: any) {
+	delete user.password;
+	delete user.isActive;
+	delete user.twoFASecret;
+	delete user.images;
+	delete user.roles;
+	delete user.first_time;
+	delete user.email;
 }

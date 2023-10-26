@@ -132,4 +132,15 @@ export class MessageWsService {
 			throw error;
 		}
 	}
+
+	async getContactInChannel(idChat: string, idUser: string): Promise<any>
+	{
+		try {
+			if(idUser)
+				return await this.chatUserService.findAllUsersInChat(idChat, idUser);
+			return [];
+		} catch (error) {
+			throw error;
+		}
+	}
 }

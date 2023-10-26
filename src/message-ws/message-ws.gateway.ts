@@ -225,9 +225,13 @@ export class MessageWsGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	async handlePrivmsg(client: Socket, params: Params) {
 		try {
 			const idUser = this.socketManagerService.getUserIdBySocketId(client.id);
+			const silenceUserInChannel = await this.messageWsService.getContactInChannel(params.target, params.id);
+			if(silenceUserInChannel.silence === true)
+				return;
 			if (params.type === 'room') {
 				const userOnlineChat = await this.messageWsService.getActiveChatUsers(params.target)
 				userOnlineChat.forEach(user => {
+					
 					user.clientIds.forEach(clientId => {
 						const messageData = {
 							id:			idUser,

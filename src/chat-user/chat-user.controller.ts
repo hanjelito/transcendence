@@ -24,6 +24,15 @@ export class ChatUserController {
     return this.chatUserService.updateSilence(userIdSilence, updateChatUserDto, user);
   };
 
+  @Get('find-user-in-chat/:idChat/:idUser')
+  @Auth(ValidRoles.user)
+  findOneUserInChat(
+    @Param('idChat') idChat: string,
+    @Param('idUser') idUser: string
+  ) {
+    return this.chatUserService.findAllUsersInChat(idChat, idUser);
+  }
+
   @Post()
   @Auth(ValidRoles.user)
   @ApiResponse({ status: 201, description: 'Chat User was Created', type: ChatUser })
@@ -37,22 +46,22 @@ export class ChatUserController {
   }
 
 
-  @Get('find-chats-iduser/:identifier')
+  @Get('find-chats-iduser/:idChat')
   @Auth(ValidRoles.user)
-  findOne(@Param('identifier') identifier: string) {
-    return this.chatUserService.findOneChatUserByIdentifier(identifier);
+  findOne(@Param('idChat') idChat: string) {
+    return this.chatUserService.findOneChatUserByIdentifier(idChat);
   }
 
-  @Get('find-chatsid-detail-user/:identifier')
+  @Get('find-chatsid-detail-user/:idChat')
   @Auth(ValidRoles.user)
-  findOneChatUserByIdentifierDetail(@Param('identifier') identifier: string) {
-    return this.chatUserService.findOneChatUserByIdentifierDetail(identifier);
+  findOneChatUserByIdentifierDetail(@Param('idChat') idChat: string) {
+    return this.chatUserService.findOneChatUserByIdentifierDetail(idChat);
   }
 
-  @Get('find-to-idchat/:identifier')
+  @Get('find-to-idchat/:idUser')
   @Auth(ValidRoles.user)
-  findOneByIdentifier(@Param('identifier') identifier: string) {
-    return this.chatUserService.findAllChatsByUserId(identifier);
+  findOneByIdentifier(@Param('idUser') idUser: string) {
+    return this.chatUserService.findAllChatsByUserId(idUser);
   }
 
   
