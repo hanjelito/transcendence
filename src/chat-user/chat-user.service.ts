@@ -180,7 +180,6 @@ export class ChatUserService {
 		return null;
 	}
 
-
 	async updateUserProperty(userId: string, updateChatUserDto: UpdateChatUserDto, user: User) {
 		try {
 			const { chatId, ...chatUserDetails } = updateChatUserDto;
@@ -248,6 +247,58 @@ export class ChatUserService {
 				throw new CustomHttpException('', false, `Chat with id ${idChat} not found`, HttpStatus.BAD_REQUEST);
 			cleanSensitiveUserData(userInChat.user);
 			return userInChat;
+		} catch (error) {
+			if (error instanceof CustomHttpException) {
+				throw error;
+			} else {
+				throw new CustomHttpException('', false, 'Error silence: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+	}
+
+	async deleteUser(idUser: string, idChat: string, user: User)
+	{
+		console.log('error', idUser, idChat);
+		try {
+			if (!isUUID(idChat) && !isUUID(idUser))
+				throw new NotFoundException(`Chat with id ${idChat} or id user with id ${idUser} not founds`);
+
+			const userInChat = await this.chatUsersRepository.findOneBy(
+				{
+					chat: { id: idChat },
+					user: { id: user.id }
+				}
+			);
+			if (!userInChat) 
+				throw new CustomHttpException('', false, `Chat with id ${idChat} not found`, HttpStatus.BAD_REQUEST);
+
+			const userInChatDelete = await this.chatUsersRepository.findOneBy(
+				{
+					chat: { id: idChat },
+					user: { id: idUser }
+				}
+			);
+			if (!userInChatDelete) 
+				throw new CustomHttpException('', false, `Chat with id ${idChat} not found`, HttpStatus.BAD_REQUEST);
+
+			if (userInChat.rol === 'user') {
+				if (userInChatDelete.rol === 'admin' || userInChatDelete.rol === 'moderator') {
+					throw new CustomHttpException('', false, `A 'user' cannot remove an '${userInChatDelete.rol}'`, HttpStatus.BAD_REQUEST);
+				}
+			}
+			
+			else if (userInChat.rol === 'moderator') {
+				if (userInChatDelete.rol === 'admin') {
+					throw new CustomHttpException('', false, `A 'moderator' cannot remove an 'admin'`, HttpStatus.BAD_REQUEST);
+				}
+			}
+
+			await this.chatUsersRepository.delete(userInChatDelete.id);
+			return {
+				message: `User ${idUser} deleted from chat ${idChat}`,
+				status: true,
+				channel: userInChatDelete
+			};
 		} catch (error) {
 			if (error instanceof CustomHttpException) {
 				throw error;

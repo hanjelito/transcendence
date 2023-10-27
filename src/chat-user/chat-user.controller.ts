@@ -35,6 +35,16 @@ export class ChatUserController {
     return this.chatUserService.findAllUsersInChat(idChat, idUser);
   }
 
+  @Delete('user-id-chat/:idUser/:idChat')
+  @Auth(ValidRoles.user)
+  deleteUser(
+    @Param('idUser') idUser: string,
+    @Param('idChat') idChat: string,
+    @GetUser() user: User,
+  ) {
+    return this.chatUserService.deleteUser(idUser, idChat, user);
+  }
+
   @Post()
   @Auth(ValidRoles.user)
   @ApiResponse({ status: 201, description: 'Chat User was Created', type: ChatUser })
@@ -65,6 +75,4 @@ export class ChatUserController {
   findOneByIdentifier(@Param('idUser') idUser: string) {
     return this.chatUserService.findAllChatsByUserId(idUser);
   }
-
-  
 }
