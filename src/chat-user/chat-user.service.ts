@@ -232,9 +232,6 @@ export class ChatUserService {
 			}
 		}
 	}
-	
-	
-
 
 	async findAllUsersInChat(idChat: string, idUser: string)
 	{

@@ -13,30 +13,10 @@ import { UpdateChatUserDto } from './dto/update-chat-user.dto';
 @Controller('chat-user')
 export class ChatUserController {
   constructor(private readonly chatUserService: ChatUserService) {}
-
-  // @Patch('silence/:userIdSilence')
-  // @Auth(ValidRoles.user)
-  // updateSilence(
-  //   @Param('userIdSilence') userIdSilence: string,
-  //   @Body() updateChatUserDto: CreateChatUserDto,
-  //   @GetUser() user: User,
-  // ) {
-  //   return this.chatUserService.updateSilence(userIdSilence, updateChatUserDto, user);
-  // };
-
-  // @Patch('moderator/:userIdModerator')
-  // @Auth(ValidRoles.user)
-  // updateModerator(
-  //   @Param('userIdModerator') userIdModerator: string,
-  //   @Body() updateChatUserDto: CreateChatUserDto,
-  //   @GetUser() user: User,
-  // ) {
-  //   return this.chatUserService.updateModerator(userIdModerator, updateChatUserDto, user);
-  // };
  
   @Patch('moderator/:userIdModerator')
   @Auth(ValidRoles.user)
-  updateModerator(
+  updateUserProperty(
     @Param('userIdModerator') userIdModerator: string,
     @Body() updateChatUserDto: CreateChatUserDto,
     @GetUser() user: User,
