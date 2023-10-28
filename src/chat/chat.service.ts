@@ -98,23 +98,23 @@ export class ChatService {
 			
 			const chatUser = new CreateChatUserDto();
 
-			if (!existingChat && createChatDto.isIncognito === true){
-				console.log(createChatDto.isIncognito);				
-				throw new CustomHttpException('', false, `Chat ${existingChat.name} does not exist and cannot be joined in incognito mode`, HttpStatus.BAD_REQUEST);
-			}
-			// if (existingChat) {
-			// 	if(existingChat.password != createChatDto.password && (!permisosUser && !createChatDto.isIncognito))
-			// 		throw new CustomHttpException('', false, `Chat	${existingChat.name} have a password is not similar`, HttpStatus.BAD_REQUEST);
-					// throw new NotFoundException(`Chat	${existingChat.name} have a password is not similar`);
+			
+			if (!existingChat === true && createChatDto.isIncognito === true){	
+				throw new CustomHttpException('', false, `Chat ${createChatDto.name} does not exist and cannot be joined in incognito mode`, HttpStatus.BAD_REQUEST);
 
+			}
 			if (existingChat) {
-				// Si el usuario es admin y (marcó incognito o la contraseña coincide), todo está bien.
-				if (permisosUser && (createChatDto.isIncognito || existingChat.password === createChatDto.password)) {
+				if (permisosUser && createChatDto.isIncognito) {
+					chatUser.chatId = existingChat.id;
+				} else if (existingChat.password === createChatDto.password) { 
+					// Si el chat no tiene contraseña o la contraseña proporcionada coincide
 					chatUser.chatId = existingChat.id;
 				} else {
 					throw new CustomHttpException('', false, `Chat ${existingChat.name} has a password that does not match`, HttpStatus.BAD_REQUEST);
 				}
-			} else {
+			}
+			
+			 else {
 				// Crear una nueva instancia de Chat y asignarle los valores de chatDetails y user
 				const chat = new Chat();
 				Object.assign(chat, chatDetails);
@@ -133,11 +133,10 @@ export class ChatService {
 			return { chat: existingChat, register: chatUserBD.status};
 
 		} catch (error) {
-			// Lanzar una excepción personalizada
 			if (error instanceof CustomHttpException) {
-			throw error;
+				throw error;
 			} else {
-				throw new CustomHttpException('', false, 'Error al crear el chat: ' + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+				throw new CustomHttpException('', false, `Error updating properties: ` + error.message, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 	}
