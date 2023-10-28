@@ -22,7 +22,6 @@ export class User {
 		uniqueItems: true,
 	})
 	@PrimaryGeneratedColumn('uuid')
-	// Propiedad id del usuario que es un identificador único generado automáticamente.
 	id: string;
 
 	@ApiProperty({
@@ -35,10 +34,8 @@ export class User {
 		unique: true,
 		
 	})
-	// Propiedad email del usuario que debe ser una cadena de caracteres y un correo electrónico válido.
 	email: string;
 
-	// Propiedad user del usuario, de tipo texto y único.
 	@ApiProperty({
 		example: 'login user name',
 		description: 'Chat Id',
@@ -61,7 +58,6 @@ export class User {
 	})
 	first_time: boolean;
 
-	// Propiedad imagenes del usuario, de tipo texto.
 	@ApiProperty({
 		example: 'url image',
 		description: 'images of the user avatar',
@@ -79,7 +75,6 @@ export class User {
 	@Column({
 		type: 'text'
 	})
-	// Propiedad password del usuario, de tipo texto y no se selecciona por defecto en las consultas.
 	password: string;
 
 	@ApiProperty({
@@ -89,7 +84,6 @@ export class User {
 	@Column({
 		type: 'text'
 	})
-	// Propiedad name del usuario, de tipo texto.
 	name: string;
 
 	@ApiProperty({
@@ -99,7 +93,6 @@ export class User {
 	@Column({
 		type: 'text'
 	})
-	// Propiedad lastName del usuario, de tipo texto.
 	lastName: string;
 
 	@ApiProperty({
@@ -111,7 +104,6 @@ export class User {
 		type: 'boolean',
 		default: true,
 	})
-	// Propiedad isActive del usuario, de tipo booleano, con un valor predeterminado de 'true'.
 	isActive: boolean;
 
 	@ApiProperty({
@@ -122,9 +114,7 @@ export class User {
 		type: 'text',
 		array: true,
 		default: ['user'],
-		// select: false // si se muestra en el resultado
 	})
-	// Propiedad roles del usuario, que es un array de tipo texto, con un valor predeterminado de ['user'].
 	roles: string[];
 
 	//
