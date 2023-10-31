@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from '../auth/dto';
@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
+import { CustomHttpException } from 'src/chat/exceptions/custom-http-exception';
 
 @Injectable()
 export class UserService {
@@ -85,6 +86,39 @@ export class UserService {
       }
       throw new InternalServerErrorException();  // Si no es un error conocido, simplemente lanza un error 500
     }
+  }
+
+  async updateRole(updateRoleDto: any, user: User) {
+    try {
+      const { id, rol } = updateRoleDto;
+      const foundUser = await this.userRepository.findOne({ where: { id } });
+      
+      if (!foundUser) {
+        throw new HttpException(`Chat ${id} no found`, HttpStatus.FORBIDDEN);
+      }
+
+      if (foundUser.roles.some(role => role === 'admin'))
+        throw new CustomHttpException('', false, `the user is admin, you can't change role`, HttpStatus.BAD_REQUEST);
+
+      let rolesToUpdate = ['user'];
+      
+      if (rol === 'super-user') {
+        rolesToUpdate.push('super-user');
+      }
+      
+      Object.assign(foundUser, { roles: rolesToUpdate });
+      const { password, isActive, ...rest } = await this.userRepository.save(foundUser);
+      return rest;
+      
+    } catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			if (error.code === '23505') {
+				throw new ConflictException('error in update role');
+			  }
+			  throw new InternalServerErrorException(); 
+		}
   }
 
   async updateUserImage(imagePath: string, user: User) {

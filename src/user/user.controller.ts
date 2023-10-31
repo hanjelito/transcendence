@@ -45,6 +45,18 @@ export class UserController {
     return this.userService.updateById(+id, updateUserDto);
   }
 
+
+  @Patch('/updateRole')
+  @Auth(ValidRoles.superUser)
+  updateRole(
+    @GetUser() user: User,
+    @Body() updateROl: any
+    ) {
+    return this.userService.updateRole(updateROl, user);
+  }
+
+  
+
   @Patch()
   @Auth(ValidRoles.user)
   update(
