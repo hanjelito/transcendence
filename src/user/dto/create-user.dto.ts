@@ -75,6 +75,9 @@ export class CreateUserDto {
 	// Propiedad user del usuario que debe ser una cadena de caracteres con una longitud mínima de 5 caracteres y maximo 10.
 	first_time: boolean;
 
+	@IsString()
+	@IsOptional()
+	twoFASecret: string;
 
 	// @ApiProperty({
 	// 	description: 'uploads/noiamge.jpg',

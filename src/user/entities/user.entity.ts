@@ -121,7 +121,7 @@ export class User {
 	@Column({
 		nullable: true,
 	})
-	twoFASecret: string;
+	twoFASecret?: string;
 
 	get hasTwoFASecret(): boolean {
         return !!this.twoFASecret;
